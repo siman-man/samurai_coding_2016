@@ -7,5 +7,10 @@ module SamurAI
 			@x = x
 			@y = y
 		end
+
+		# 自分の位置を返す
+		def position
+			[x, y].join(' ')
+		end
 	end
 end

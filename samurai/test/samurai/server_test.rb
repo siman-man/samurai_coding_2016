@@ -25,7 +25,17 @@ class TestSamurai < Minitest::Test
 	end
 
 	# 治療期間の最小値は 12, 最大値は 48である。
-	def test_height
+	def test_healing_time
 		assert_includes 12..48, server.healing_time
 	end
+
+	def test_init_kyokan_list
+    6.times do |id|
+      kyokan = server.kyokan_list[id]
+
+      assert_includes 0...6, kyokan.id
+      assert_includes 0...server.width, kyokan.x
+      assert_includes 0...server.height, kyokan.y
+    end
+  end
 end

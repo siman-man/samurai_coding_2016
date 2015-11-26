@@ -1,5 +1,5 @@
 module SamurAI
-	class Agent
+	class Player
 		def initialize
 		end
 	end

@@ -1,2 +1,7 @@
 *.out
 test.rb
+*.pdf
+.DS_Store
+SamurAImanager-1124/
+samurai/.idea/
+samurai/.rbenv-gemsets
