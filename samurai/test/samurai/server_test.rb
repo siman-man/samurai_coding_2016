@@ -6,7 +6,13 @@ class TestSamurai < Minitest::Test
 
 	def setup
 		@server = SamurAI::Server.new
-	end
+    @server.init_game
+  end
+
+  # 初期化の時は0になっている
+  def test_current_turn
+    assert_equal 0, server.current_turn
+  end
 
 	# 総ターン数は 12 の倍数であり、最小値は 12, 最大値は 1008 である。
 	def test_max_turn

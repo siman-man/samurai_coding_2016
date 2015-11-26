@@ -1,13 +1,16 @@
 module SamurAI
 	class Server
 		attr_reader :max_turn, :width, :height, :field, :healing_time,
-                :kyokan_list, :player_list
+                :kyokan_list, :player_list, :current_turn
 
 		NEUTRAL = 8
 		UNKNOWN = 9
 
+		def initialize
+    end
+
     #
-    # フィールド情報の初期化を行う
+    # ゲーム情報の初期化を行う
     #   1. 最大ターンの決定
     #   2. フィールドの横幅を決める
     #   3. フィールドの縦幅を決める
@@ -15,16 +18,17 @@ module SamurAI
     #   5. 居館のリストを作成
     #   6. フィールドの状態を初期化
     #
-		def initialize
-			@max_turn = 12 * [*1..84].sample
-			@width = [*10..20].sample
-			@height = [*10..20].sample
-			@healing_time = [*12..48].sample
+    def init_game
+      @max_turn = 12 * [*1..84].sample
+      @width = [*10..20].sample
+      @height = [*10..20].sample
+      @healing_time = [*12..48].sample
+      @current_turn = 0
 
-			init_kyokan_list
+      init_kyokan_list
 
-			@field = Array.new(@height).map{Array.new(@width, NEUTRAL)}
-		end
+      @field = Array.new(@height).map{Array.new(@width, NEUTRAL)}
+    end
 
     #
     # 現在は完全ランダムで居館を作成
@@ -53,7 +57,7 @@ module SamurAI
     end
 
     # 試合を始める
-    def game_start
+    def start_game
     end
 
     # 一番最初に渡すパラメータ
@@ -69,8 +73,10 @@ module SamurAI
         params << kyokan.position
       end
 
-      # 各サムライの成績を表す
+      # 各サムライの成績を入れる
       6.times do |player_id|
+        player = player_list[player_id]
+        params << player.info
       end
 
       params.join("\n")
@@ -78,6 +84,9 @@ module SamurAI
 
     # 試合中に渡すパラメータ
     def input_params
+      params = []
+
+      params.join("\n")
     end
 	end
 end
