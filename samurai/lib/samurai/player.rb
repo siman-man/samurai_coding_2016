@@ -6,6 +6,8 @@ module SamurAI
     HIDE = 0
     NOHIDE = 1
 
+    SIGHT_RANGE = 5 # 視界の範囲
+
     def initialize(id:, x:, y:, group_id:)
       @y = y
       @x = x
@@ -48,6 +50,13 @@ module SamurAI
     #
     def cure
       @cure_period = [0, @cure_period-1].max
+    end
+
+    #
+    # 指定されたマスが見えるかどうか
+    #
+    def can_visible?(y:, x:)
+      (@x - x).abs + (@y - y).abs <= SIGHT_RANGE
     end
   end
 end

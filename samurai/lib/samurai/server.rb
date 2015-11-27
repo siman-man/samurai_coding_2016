@@ -98,9 +98,12 @@ module SamurAI
 
       # 各プレイヤーの情報
       MAX_PLAYER_NUM.times do |player_id|
-        player = player_list[player_id]
-        params << player.info
+        samurai = player_list[player_id]
+        params << samurai.info
       end
+
+      # フィールド情報
+      params << field.info(player.group_id)
 
       params.join("\n")
     end
