@@ -1,4 +1,5 @@
 *.out
+*.swp
 test.rb
 *.pdf
 .DS_Store
