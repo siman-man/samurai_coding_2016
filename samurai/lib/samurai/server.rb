@@ -3,6 +3,9 @@ module SamurAI
 		attr_reader :max_turn, :width, :height, :field, :healing_time,
                 :kyokan_list, :player_list, :current_turn
 
+    # 参加プレイヤーの最大人数
+    MAX_PLAYER_NUM = 6
+
 		NEUTRAL = 8
 		UNKNOWN = 9
 
@@ -38,7 +41,7 @@ module SamurAI
       @kyokan_list = []
       check_list = Hash.new(false)
 
-      6.times do |kyokan_id|
+      MAX_PLAYER_NUM.times do |kyokan_id|
         begin
           y = [*0...height].sample
           x = [*0...width].sample
@@ -68,13 +71,13 @@ module SamurAI
       params << [max_turn, group_id, id, width, height].join(' ')
 
       # 各サムライの居館の位置を入れる
-      6.times do |kyokan_id|
+      MAX_PLAYER_NUM.times do |kyokan_id|
         kyokan = kyokan_list[kyokan_id]
         params << kyokan.position
       end
 
       # 各サムライの成績を入れる
-      6.times do |player_id|
+      MAX_PLAYER_NUM.times do |player_id|
         player = player_list[player_id]
         params << player.info
       end
@@ -83,10 +86,31 @@ module SamurAI
     end
 
     # 試合中に渡すパラメータ
-    def input_params
+    def input_params(player_id)
       params = []
+      player = player_list[player_id]
+
+      # 現在のターン
+      params << current_turn
+
+      # 治療期間
+      params << player.cure_period
+
+      # 各プレイヤーの情報
+      MAX_PLAYER_NUM.times do |player_id|
+        player = player_list[player_id]
+        params << player.info
+      end
 
       params.join("\n")
+    end
+
+    #
+    # 行動指示の解析
+    # @param input プレイヤーからの行動指示
+    #
+    def parse_operation(input)
+      input.split.map(&:to_i)
     end
 	end
 end

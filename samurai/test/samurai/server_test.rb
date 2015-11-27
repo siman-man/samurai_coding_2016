@@ -1,7 +1,7 @@
 require_relative '../mini_helper'
 require 'minitest/autorun'
 
-class TestSamurai < Minitest::Test
+class TestSamuraiServer < Minitest::Test
 	attr_reader :server
 
 	def setup
@@ -43,5 +43,13 @@ class TestSamurai < Minitest::Test
       assert_includes 0...server.width, kyokan.x
       assert_includes 0...server.height, kyokan.y
     end
+  end
+
+  def test_parse_operation
+    operation = "0 0 0 0 0 0 0"
+    assert_equal [0, 0, 0, 0, 0, 0, 0], server.parse_operation(operation)
+
+    operation = "1 2 3 4 5 6 7"
+    assert_equal [1, 2, 3, 4, 5, 6, 7], server.parse_operation(operation)
   end
 end

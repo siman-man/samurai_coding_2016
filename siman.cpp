@@ -151,6 +151,9 @@ class SamurAI{
 			cout << "0 0 0 0 0 0 0" << endl;
 		}
 
+    /**
+     * AIの実行
+     */
 		void run(){
 			updateFieldData();
 			move();
