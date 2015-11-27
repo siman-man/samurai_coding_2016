@@ -48,7 +48,7 @@ const int MAX_PLAYER_NUM = 6;
 // プレイヤーのリスト
 PLAYER g_playerList[MAX_PLAYER_NUM];
 
-// 自分のサムライ番号
+// 自分のプレイヤー番号
 int g_playerId;
 // グループID
 int g_groupId;
@@ -67,6 +67,7 @@ class SamurAI{
 		void init(){
 			scanf("%d %d %d %d %d", &g_max_turn, &g_playerId, &g_groupId, &g_width, &g_height);
 
+			// 居館の位置を取得（ついでにユーザの初期位置を設定）
 			for(int id = 0; id < 6; id++){
 				int homeY;
 				int homeX;
@@ -78,6 +79,7 @@ class SamurAI{
 				player.setHomePosition(homeY, homeX);
 			}
 
+			// 各プレイヤーの戦績を取得
 			for(int id = 0; id < 6; id++){
 				int rank;
 				int score;
@@ -85,6 +87,9 @@ class SamurAI{
 				PLAYER *player = getPlayer(id);
 				scanf("%d %d", &rank, &score);
 			}
+
+			// 準備完了の通知をサーバ側に足して行う
+			cout << 0 << endl;
 		}
 
 		void run(){
