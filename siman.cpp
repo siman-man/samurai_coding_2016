@@ -25,6 +25,7 @@ struct PLAYER{
 	int x;				// 現在のx座標
 	int homeY;		// 居館のy座標
 	int homeX; 		// 居館のx座標
+	int status; 	// 潜伏状態かどうか
 
 	PLAYER(int id = UNKNOWN){
 		this->id = id;
@@ -34,16 +35,29 @@ struct PLAYER{
 		this->homeX = UNKNOWN;
 	}
 
+	// 初期位置の設定
 	void setHomePosition(int y, int x){
 		this->y = y;
 		this->x = x;
 		this->homeY = y;
 		this->homeX = x;
 	}
+
+	// プレイヤー情報の更新
+	void update(int y, int x, int status){
+		this->y = y;
+		this->x = x;
+		this->status = status;
+	}
 };
 
 // 参加するプレイヤーの最大人数
 const int MAX_PLAYER_NUM = 6;
+
+// フィールドの最大横幅
+const int MAX_WIDTH = 20;
+// フィールドの最大縦幅
+const int MAX_HEIGHT = 20;
 
 // プレイヤーのリスト
 PLAYER g_playerList[MAX_PLAYER_NUM];
@@ -58,6 +72,12 @@ int g_max_turn;
 int g_width;
 // フィールドの縦幅
 int g_height;
+// 現在のターン
+int g_currentTurn;
+// 治療期間
+int g_curePeriod;
+// フィールド
+int g_field[MAX_HEIGHT][MAX_WIDTH];
 
 class SamurAI{
 	public:
@@ -68,7 +88,7 @@ class SamurAI{
 			scanf("%d %d %d %d %d", &g_max_turn, &g_playerId, &g_groupId, &g_width, &g_height);
 
 			// 居館の位置を取得（ついでにユーザの初期位置を設定）
-			for(int id = 0; id < 6; id++){
+			for(int id = 0; id < MAX_PLAYER_NUM; id++){
 				int homeY;
 				int homeX;
 
@@ -80,7 +100,7 @@ class SamurAI{
 			}
 
 			// 各プレイヤーの戦績を取得
-			for(int id = 0; id < 6; id++){
+			for(int id = 0; id < MAX_PLAYER_NUM; id++){
 				int rank;
 				int score;
 
@@ -92,7 +112,48 @@ class SamurAI{
 			cout << 0 << endl;
 		}
 
+		/**
+		 * フィールド情報の更新を行う
+		 */
+		void updateFieldData(){
+			// 現在のターンの取得
+			scanf("%d", &g_currentTurn);
+
+			// 治療期間の取得
+			scanf("%d", &g_curePeriod);
+
+			// 各プレイヤーの情報を更新
+			for(int id = 0; id < MAX_PLAYER_NUM; id++){
+				int y;
+				int x;
+				int status;
+
+				PLAYER *player = getPlayer(id);
+				scanf("%d %d %d", &y, &x, &status);
+
+				player->update(y, x, status);
+			}
+			
+			// フィールド情報の更新
+			for(int y = 0; y < g_height; y++){
+				for(int x = 0; x < g_width; x++){
+					int cell;
+					scanf("%d", &cell);
+					g_field[y][x] = cell;
+				}
+			}
+		}
+
+		/**
+		 * 行動
+		 */
+		void move(){
+			cout << "0 0 0 0 0 0 0" << endl;
+		}
+
 		void run(){
+			updateFieldData();
+			move();
 		}
 
 		PLAYER *getPlayer(int id){
