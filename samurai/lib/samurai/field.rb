@@ -8,8 +8,8 @@ module SamurAI
     def initialize(width:, height:)
       @width = width
       @height = height
-      @field = Array.new(height).map{Array.new(width, Cell.new)}
-      @visible = Array.new(height).map{Array.new(width, NEUTRAL).map{Array.new(2, false)}}
+      @field = Array.new(height).map { Array.new(width, Cell.new) }
+      @visible = Array.new(height).map { Array.new(width, NEUTRAL).map { Array.new(2, false) } }
     end
 
     #
@@ -17,22 +17,22 @@ module SamurAI
     #
     def update(player_list)
       # 視界情報を初期化
-      @visible = Array.new(height).map{Array.new(width, NEUTRAL).map{Array.new(2, false)}}
+      @visible = Array.new(height).map { Array.new(width, NEUTRAL).map { Array.new(2, false) } }
     end
 
     #
     # 指定したgroup_idから確認できるフィールド情報を返す
     #
     def info(group_id)
-      @field.map.with_index do |row, y|
-        row.map.with_index do |cell, x|
+      @field.map.with_index { |row, y|
+        row.map.with_index { |cell, x|
           if cell.visible?(group_id)
             cell.status
           else
             UNKNOWN
           end
-        end
-      end
+        }.join(' ')
+      }.join("\n")
     end
 
     def [](index)
