@@ -36,9 +36,11 @@ class TestSamuraiServer < Minitest::Test
 	end
 
 	def test_init_kyokan_list
-    6.times do |id|
-      kyokan = server.kyokan_list[id]
+    server.init_kyokan_list
 
+    assert_equal 6, server.kyokan_list.size
+
+    server.kyokan_list.each do |kyokan|
       assert_includes 0...6, kyokan.id
       assert_includes 0...server.width, kyokan.x
       assert_includes 0...server.height, kyokan.y

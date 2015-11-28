@@ -6,9 +6,6 @@ module SamurAI
     # 参加プレイヤーの最大人数
     MAX_PLAYER_NUM = 6
 
-		NEUTRAL = 8
-		UNKNOWN = 9
-
 		def initialize
     end
 
@@ -28,9 +25,7 @@ module SamurAI
       @healing_time = [*12..48].sample
       @current_turn = 0
 
-      init_kyokan_list
-
-      @field = Array.new(@height).map{Array.new(@width, NEUTRAL)}
+      @field = Array.new(@height).map{Array.new(@width, Cell.new)}
     end
 
     #
@@ -48,8 +43,16 @@ module SamurAI
           z = y*width + x
         end unless check_list[z]
 
-        kyokan_list << Kyokan.new(kyokan_id, x, y)
+        add_kyokan(kyokan_id: kyokan_id, y: y, x: x)
       end
+    end
+
+    # 居館を追加
+    def add_kyokan(kyokan_id:, y:, x:)
+      cell = field[y][x]
+
+      cell.build_kyokan(kyokan_id)
+      kyokan_list << Kyokan.new(kyokan_id, x, y)
     end
 
     #
@@ -61,6 +64,7 @@ module SamurAI
 
     # 試合を始める
     def start_game
+      init_kyokan_list
     end
 
     # 一番最初に渡すパラメータ
@@ -71,15 +75,13 @@ module SamurAI
       params << [max_turn, group_id, id, width, height].join(' ')
 
       # 各サムライの居館の位置を入れる
-      MAX_PLAYER_NUM.times do |kyokan_id|
-        kyokan = kyokan_list[kyokan_id]
+      kyokan_list.each do |kyokan|
         params << kyokan.position
       end
 
       # 各サムライの成績を入れる
-      MAX_PLAYER_NUM.times do |player_id|
-        player = player_list[player_id]
-        params << player.info
+      player_list.each do |samurai|
+        params << samurai.data
       end
 
       params.join("\n")
@@ -97,8 +99,7 @@ module SamurAI
       params << player.cure_period
 
       # 各プレイヤーの情報
-      MAX_PLAYER_NUM.times do |player_id|
-        samurai = player_list[player_id]
+      player_list.each do |samurai|
         params << samurai.info
       end
 
