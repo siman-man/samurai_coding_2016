@@ -5,7 +5,7 @@ class TestSamuraiPlayer < Minitest::Test
   attr_reader :player
 
   def setup
-    @player = SamurAI::Player.new(id: 0, y: 10, x: 8, group_id: 0)
+    @player = SamurAI::Player.new(id: 0, y: 10, x: 8)
   end
 
   def test_initialize

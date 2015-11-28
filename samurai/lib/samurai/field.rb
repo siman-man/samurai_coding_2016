@@ -8,7 +8,7 @@ module SamurAI
     def initialize(width:, height:)
       @width = width
       @height = height
-      @field = Array.new(height).map{Array.new(width, NEUTRAL)}
+      @field = Array.new(height).map{Array.new(width, Cell.new)}
       @visible = Array.new(height).map{Array.new(width, NEUTRAL).map{Array.new(2, false)}}
     end
 
@@ -24,7 +24,7 @@ module SamurAI
     # 指定したgroup_idから確認できるフィールド情報を返す
     #
     def info(group_id)
-      field.map.with_index do |row, y|
+      @field.map.with_index do |row, y|
         row.map.with_index do |cell, x|
           if cell.visible?(group_id)
             cell.status
@@ -36,7 +36,11 @@ module SamurAI
     end
 
     def [](index)
-      field[index]
+      @field[index]
+    end
+
+    def inside?(y:, x:)
+      0 <= y && y < height && 0 <= x && x < width
     end
   end
 end

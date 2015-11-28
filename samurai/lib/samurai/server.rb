@@ -25,7 +25,7 @@ module SamurAI
       @healing_time = [*12..48].sample
       @current_turn = 0
 
-      @field = Array.new(@height).map{Array.new(@width, Cell.new)}
+      @field = Field.new(width: width, height: height)
     end
 
     #

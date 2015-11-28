@@ -48,7 +48,7 @@ module SamurAI
     end
 
     #
-    # このセルを所有しているチーム
+    # このセルを所有しているチームを返す、どちらでもない場合は-1を返す
     #
     def owner_group
       if owner == NEUTRAL

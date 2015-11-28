@@ -13,13 +13,13 @@ module SamurAI
     DY = [1, 0, -1, 0]
     DX = [0, 1, 0, -1]
 
-    def initialize(id:, x:, y:, group_id:)
+    def initialize(id:, x:, y:)
       @y = y
       @x = x
       @id = id
       @point = 0
       @status = NOHIDE
-      @group_id = group_id
+      @group_id = id%2
       @cure_period = 0
     end
 
@@ -45,6 +45,10 @@ module SamurAI
     def move(direct:, field:)
       ny = y + DY[direct]
       nx = x + DX[direct]
+
+      if hide?
+      else
+      end
     end
 
     #
