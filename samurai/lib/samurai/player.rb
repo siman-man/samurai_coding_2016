@@ -46,9 +46,33 @@ module SamurAI
       ny = y + DY[direct]
       nx = x + DX[direct]
 
+      # フィールド外に出ていた場合は失敗
+      return false if field.outside?(y: ny, x: nx)
+
+      cell = field[ny][nx]
+
+      # 居館が存在している場合も失敗
+      return false if cell.exist_kyokan?
+
       if hide?
+        # 潜伏状態は味方領地しか移動できない
+        if cell.owner_group == group_id
+          @y = ny
+          @x = nx
+        else
+          return false
+        end
       else
+        # 潜伏していない状態で他のサムライが存在している場合は失敗
+        if !hide? && cell.exist_samurai?
+          return false
+        else
+          @y = ny
+          @x = nx
+        end
       end
+
+      true
     end
 
     #

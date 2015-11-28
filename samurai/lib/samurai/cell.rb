@@ -8,14 +8,29 @@ module SamurAI
     def initialize
       @owner = NEUTRAL
       @exist_kyokan = false
+      @exist_samurai = false
       @visible = Array.new(2, false)
     end
 
     #
-    # 居館が存在しているかどうか
+    # 居館が存在しているかどうかを調べる
     #
     def exist_kyokan?
       @exist_kyokan
+    end
+
+    #
+    # 潜伏していないサムライが存在しているかどうかを調べる
+    #
+    def exist_samurai?
+      @exist_samurai
+    end
+
+    #
+    # サムライがいることを更新
+    #
+    def set_samurai
+      @exist_samurai = true
     end
 
     #
@@ -56,6 +71,13 @@ module SamurAI
       else
         owner%2
       end
+    end
+
+    #
+    # セル情報をクリアする
+    #
+    def clear
+      @exist_samurai = false
     end
   end
 end

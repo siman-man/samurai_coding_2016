@@ -42,5 +42,9 @@ module SamurAI
     def inside?(y:, x:)
       0 <= y && y < height && 0 <= x && x < width
     end
+
+    def outside?(y:, x:)
+      y < 0 || height <= y || x < 0 || width <= x
+    end
   end
 end
