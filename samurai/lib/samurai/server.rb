@@ -51,7 +51,7 @@ module SamurAI
     def add_kyokan(kyokan_id:, y:, x:)
       cell = field[y][x]
 
-      cell.build_kyokan(kyokan_id)
+      cell.build_kyokan(id: kyokan_id)
       kyokan_list << Kyokan.new(kyokan_id, x, y)
     end
 

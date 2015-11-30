@@ -36,7 +36,7 @@ module SamurAI
     #
     # 居館を建築
     #
-    def build_kyokan(id)
+    def build_kyokan(id:)
       @owner = id
       @exist_kyokan = true
     end
@@ -58,7 +58,7 @@ module SamurAI
     #
     # 所有者の更新(居館が存在している場合は更新しない)
     #
-    def update_owner(id)
+    def update_owner(id:)
       @exist_kyokan || @owner = id
     end
 

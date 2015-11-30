@@ -19,7 +19,7 @@ module SamurAI
       @id = id
       @point = 0
       @status = NOHIDE
-      @group_id = id%2
+      @group_id = id % 2
       @cure_period = 0
     end
 
@@ -51,8 +51,8 @@ module SamurAI
 
       cell = field[ny][nx]
 
-      # 居館が存在している場合も失敗
-      return false if cell.exist_kyokan?
+      # 他のサムライの居館が存在している場合も失敗
+      return false if cell.exist_kyokan? && cell.owner != id
 
       if hide?
         # 潜伏状態は味方領地しか移動できない
@@ -64,7 +64,7 @@ module SamurAI
         end
       else
         # 潜伏していない状態で他のサムライが存在している場合は失敗
-        if !hide? && cell.exist_samurai?
+        if cell.exist_samurai?
           return false
         else
           @y = ny

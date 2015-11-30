@@ -18,7 +18,7 @@ class TestSamuraiCell < Minitest::Test
 
   def test_build_kyokan
     cell = server.field[0][0]
-    cell.build_kyokan(1)
+    cell.build_kyokan(id: 1)
 
     assert_equal 1, cell.owner
   end

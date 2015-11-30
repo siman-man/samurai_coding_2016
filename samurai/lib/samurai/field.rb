@@ -8,7 +8,7 @@ module SamurAI
     def initialize(width:, height:)
       @width = width
       @height = height
-      @field = Array.new(height).map { Array.new(width, Cell.new) }
+      @field = Array.new(height).map { Array.new(width).map{Cell.new} }
       @visible = Array.new(height).map { Array.new(width, NEUTRAL).map { Array.new(2, false) } }
     end
 
