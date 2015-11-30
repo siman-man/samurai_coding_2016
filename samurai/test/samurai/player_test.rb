@@ -270,10 +270,10 @@ class TestSamuraiPlayer < Minitest::Test
 
   def test_sword_attack
     reset_field
-    spear_player = SamurAI::Player.new(id: 1, y: 10, x: 8)
+    sword_player = SamurAI::Player.new(id: 1, y: 10, x: 8)
 
     # 南方向への攻撃
-    assert_equal true, spear_player.attack(direct: 0, field: field)
+    assert_equal true, sword_player.attack(direct: 0, field: field)
     assert_equal true, field[11][8].attacked
     assert_equal true, field[11][9].attacked
     assert_equal true, field[10][9].attacked
@@ -285,7 +285,7 @@ class TestSamuraiPlayer < Minitest::Test
 
     # 東方向への攻撃
     reset_field
-    assert_equal true, spear_player.attack(direct: 1, field: field)
+    assert_equal true, sword_player.attack(direct: 1, field: field)
     assert_equal true, field[10][9].attacked
     assert_equal true, field[10][10].attacked
     assert_equal false, field[10][11].attacked
@@ -296,7 +296,7 @@ class TestSamuraiPlayer < Minitest::Test
 
     # 北方向への攻撃
     reset_field
-    assert_equal true, spear_player.attack(direct: 2, field: field)
+    assert_equal true, sword_player.attack(direct: 2, field: field)
     assert_equal true, field[9][8].attacked
     assert_equal true, field[8][8].attacked
     assert_equal true, field[9][7].attacked
@@ -311,7 +311,7 @@ class TestSamuraiPlayer < Minitest::Test
 
     # 西方向への攻撃
     reset_field
-    assert_equal true, spear_player.attack(direct: 3, field: field)
+    assert_equal true, sword_player.attack(direct: 3, field: field)
     assert_equal true, field[10][7].attacked
     assert_equal true, field[10][6].attacked
     assert_equal true, field[11][7].attacked
@@ -323,10 +323,10 @@ class TestSamuraiPlayer < Minitest::Test
 
   def test_ax_attack
     reset_field
-    spear_player = SamurAI::Player.new(id: 2, y: 10, x: 8)
+    ax_player = SamurAI::Player.new(id: 2, y: 10, x: 8)
 
     # 南方向への攻撃
-    assert_equal true, spear_player.attack(direct: 0, field: field)
+    assert_equal true, ax_player.attack(direct: 0, field: field)
     assert_equal true, field[11][8].attacked
     assert_equal true, field[11][9].attacked
     assert_equal true, field[11][7].attacked
@@ -340,7 +340,7 @@ class TestSamuraiPlayer < Minitest::Test
 
     # 東方向への攻撃
     reset_field
-    assert_equal true, spear_player.attack(direct: 1, field: field)
+    assert_equal true, ax_player.attack(direct: 1, field: field)
     assert_equal true, field[9][9].attacked
     assert_equal true, field[10][9].attacked
     assert_equal true, field[11][9].attacked
@@ -352,7 +352,7 @@ class TestSamuraiPlayer < Minitest::Test
 
     # 北方向への攻撃
     reset_field
-    assert_equal true, spear_player.attack(direct: 2, field: field)
+    assert_equal true, ax_player.attack(direct: 2, field: field)
     assert_equal true, field[9][7].attacked
     assert_equal true, field[9][8].attacked
     assert_equal true, field[9][9].attacked
@@ -364,7 +364,7 @@ class TestSamuraiPlayer < Minitest::Test
 
     # 西方向への攻撃
     reset_field
-    assert_equal true, spear_player.attack(direct: 3, field: field)
+    assert_equal true, ax_player.attack(direct: 3, field: field)
     assert_equal true, field[9][7].attacked
     assert_equal true, field[10][7].attacked
     assert_equal true, field[11][7].attacked
