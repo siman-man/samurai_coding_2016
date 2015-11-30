@@ -241,7 +241,7 @@ class TestSamuraiPlayer < Minitest::Test
     assert_equal spear_player.id, field[10][11].owner
     assert_equal false, field[10][7].attacked
 
-    # 南方角への攻撃
+    # 北方角への攻撃
     assert_equal true, spear_player.attack(direct: 2, field: field)
     assert_equal true, field[9][8].attacked
     assert_equal spear_player.id, field[9][8].owner
@@ -319,5 +319,60 @@ class TestSamuraiPlayer < Minitest::Test
     assert_equal false, field[10][5].attacked
     assert_equal false, field[10][8].attacked
     assert_equal false, field[11][6].attacked
+  end
+
+  def test_ax_attack
+    reset_field
+    spear_player = SamurAI::Player.new(id: 2, y: 10, x: 8)
+
+    # 南方向への攻撃
+    assert_equal true, spear_player.attack(direct: 0, field: field)
+    assert_equal true, field[11][8].attacked
+    assert_equal true, field[11][9].attacked
+    assert_equal true, field[11][7].attacked
+    assert_equal true, field[10][9].attacked
+    assert_equal true, field[10][7].attacked
+    assert_equal true, field[9][9].attacked
+    assert_equal true, field[9][7].attacked
+    assert_equal false, field[9][8].attacked
+    assert_equal false, field[9][6].attacked
+    assert_equal false, field[10][8].attacked
+
+    # 東方向への攻撃
+    reset_field
+    assert_equal true, spear_player.attack(direct: 1, field: field)
+    assert_equal true, field[9][9].attacked
+    assert_equal true, field[10][9].attacked
+    assert_equal true, field[11][9].attacked
+    assert_equal true, field[9][8].attacked
+    assert_equal true, field[11][8].attacked
+    assert_equal true, field[9][7].attacked
+    assert_equal true, field[11][7].attacked
+    assert_equal false, field[10][7].attacked
+
+    # 北方向への攻撃
+    reset_field
+    assert_equal true, spear_player.attack(direct: 2, field: field)
+    assert_equal true, field[9][7].attacked
+    assert_equal true, field[9][8].attacked
+    assert_equal true, field[9][9].attacked
+    assert_equal true, field[10][7].attacked
+    assert_equal true, field[10][9].attacked
+    assert_equal true, field[11][7].attacked
+    assert_equal true, field[11][9].attacked
+    assert_equal false, field[11][8].attacked
+
+    # 西方向への攻撃
+    reset_field
+    assert_equal true, spear_player.attack(direct: 3, field: field)
+    assert_equal true, field[9][7].attacked
+    assert_equal true, field[10][7].attacked
+    assert_equal true, field[11][7].attacked
+    assert_equal true, field[9][8].attacked
+    assert_equal true, field[11][8].attacked
+    assert_equal true, field[9][9].attacked
+    assert_equal true, field[11][9].attacked
+    assert_equal false, field[10][9].attacked
+    assert_equal false, field[10][8].attacked
   end
 end
