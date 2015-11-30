@@ -375,4 +375,14 @@ class TestSamuraiPlayer < Minitest::Test
     assert_equal false, field[10][9].attacked
     assert_equal false, field[10][8].attacked
   end
+
+  def test_attack_not_occupy_kyokan
+    reset_field
+    ax_player = SamurAI::Player.new(id: 2, y: 10, x: 8)
+
+    field[11][8].build_kyokan(id: 1)
+    ax_player.attack(direct: 0, field: field)
+
+    assert_equal 1, field[11][8].owner
+  end
 end
