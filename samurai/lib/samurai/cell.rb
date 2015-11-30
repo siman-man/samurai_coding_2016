@@ -29,8 +29,8 @@ module SamurAI
     #
     # サムライがいることを更新
     #
-    def set_samurai
-      @exist_samurai = true
+    def set_samurai(id:)
+      @exist_samurai = id
     end
 
     #
@@ -69,7 +69,7 @@ module SamurAI
       if owner == NEUTRAL
         -1
       else
-        owner%2
+        owner / 3
       end
     end
 

@@ -3,13 +3,19 @@ module SamurAI
     attr_reader :ranking, :point, :status, :y, :x, :id, :group_id
     attr_accessor :cure_period
 
+    #
     # プレイヤーの状態を示す
+    # 0: 潜伏状態
+    # 1: 潜伏していない状態
+    #
     HIDE = 0
     NOHIDE = 1
 
     SIGHT_RANGE = 5 # 視界の範囲
 
+    #
     # 方角は「南、東、北、西」の順番
+    #
     DY = [1, 0, -1, 0]
     DX = [0, 1, 0, -1]
 
@@ -19,7 +25,7 @@ module SamurAI
       @id = id
       @point = 0
       @status = NOHIDE
-      @group_id = id % 2
+      @group_id = id / 3 # [0,1,2], [3,4,5] でグループ分け
       @cure_period = 0
     end
 
@@ -83,10 +89,16 @@ module SamurAI
     end
 
     #
-    # 姿を見せる
+    # 姿を見せる。出現先に他のサムライがいた場合は失敗する
     #
-    def show_up
-      @status = NOHIDE
+    def show_up(field:)
+      if field[y][x].exist_samurai?
+        return false
+      else
+        @status = NOHIDE
+      end
+
+      true
     end
 
     #

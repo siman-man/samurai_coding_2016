@@ -29,8 +29,12 @@ class TestSamuraiPlayer < Minitest::Test
   end
 
   def test_show_up
-    player.show_up
+    assert_equal true, player.show_up(field: field)
     assert_equal false, player.hide?
+
+    player.hide
+    field[10][8].set_samurai(id: 1)
+    assert_equal false, player.show_up(field: field)
   end
 
   def test_cure
@@ -57,7 +61,7 @@ class TestSamuraiPlayer < Minitest::Test
   # 姿が見えている時の移動行動
   #
   def test_move_show_up
-    player.show_up
+    player.show_up(field: field)
     # 南に移動
     assert_equal true, player.move(direct: 0, field: field)
     assert_equal 11, player.y
@@ -84,7 +88,7 @@ class TestSamuraiPlayer < Minitest::Test
     assert_equal 8, player.x
 
     # (10, 9)の位置にサムライをセット
-    field[10][9].set_samurai
+    field[10][9].set_samurai(id: 3)
 
     # 既にサムライが居る場所には移動できない（プレイヤーの座標はそのまま）
     assert_equal false, player.move(direct: 1, field: field)
@@ -134,19 +138,19 @@ class TestSamuraiPlayer < Minitest::Test
     assert_equal 8, player.x
 
     # 東に移動
-    field[11][9].update_owner(id: 2)
+    field[11][9].update_owner(id: 1)
     assert_equal true, player.move(direct: 1, field: field)
     assert_equal 11, player.y
     assert_equal 9, player.x
 
     # 北に移動
-    field[10][9].update_owner(id: 4)
+    field[10][9].update_owner(id: 2)
     assert_equal true, player.move(direct: 2, field: field)
     assert_equal 10, player.y
     assert_equal 9, player.x
 
     # 敵の陣地でも移動できない
-    field[10][8].update_owner(id: 1)
+    field[10][8].update_owner(id: 3)
     assert_equal false, player.move(direct: 3, field: field)
     assert_equal 10, player.y
     assert_equal 9, player.x
@@ -173,7 +177,7 @@ class TestSamuraiPlayer < Minitest::Test
     assert_equal 7, player.x
 
     # (10, 6)の位置にサムライをセット
-    field[10][6].set_samurai
+    field[10][6].set_samurai(id: 3)
     field[10][6].update_owner(id: 0)
 
     # 他のサムライがいても行動可能
