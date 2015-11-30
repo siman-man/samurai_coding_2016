@@ -9,8 +9,12 @@ class TestSamuraiPlayer < Minitest::Test
     @field = SamurAI::Field.new(width: 15, height: 12)
   end
 
-  def reset
+  def reset_data
     @player = SamurAI::Player.new(id: 0, y: 10, x: 8)
+    @field = SamurAI::Field.new(width: 15, height: 12)
+  end
+
+  def reset_field
     @field = SamurAI::Field.new(width: 15, height: 12)
   end
 
@@ -117,7 +121,7 @@ class TestSamuraiPlayer < Minitest::Test
   #
   def test_move_hide
     # フィールドとプレイヤーを初期化
-    reset
+    reset_data
     player.hide
 
     # 隠れている状態では味方の陣地以外は行動出来ない
@@ -184,5 +188,83 @@ class TestSamuraiPlayer < Minitest::Test
     assert_equal true, player.move(direct: 3, field: field)
     assert_equal 10, player.y
     assert_equal 6, player.x
+  end
+
+  def test_job
+    spear_player = SamurAI::Player.new(id: 0, y: 10, x: 8)
+    spear_player2 = SamurAI::Player.new(id: 3, y: 10, x: 8)
+
+    assert_equal SamurAI::Player::SPEAR, spear_player.job
+    assert_equal SamurAI::Player::SPEAR, spear_player2.job
+
+
+    sword_player = SamurAI::Player.new(id: 1, y: 10, x: 8)
+    sword_player2 = SamurAI::Player.new(id: 4, y: 10, x: 8)
+
+    assert_equal SamurAI::Player::SWORD, sword_player.job
+    assert_equal SamurAI::Player::SWORD, sword_player2.job
+
+
+    ax_player = SamurAI::Player.new(id: 2, y: 10, x: 8)
+    ax_player2 = SamurAI::Player.new(id: 5, y: 10, x: 8)
+
+    assert_equal SamurAI::Player::AX, ax_player.job
+    assert_equal SamurAI::Player::AX, ax_player2.job
+  end
+
+  def test_spear_attack
+    reset_field
+    spear_player = SamurAI::Player.new(id: 0, y: 10, x: 8)
+    spear_player.hide
+
+    # 潜伏中は攻撃出来ない
+    assert_equal false, spear_player.attack(direct: 0, field: field)
+
+    spear_player.show_up(field: field)
+
+    # 南方角への攻撃
+    assert_equal true, spear_player.attack(direct: 0, field: field)
+    assert_equal true, field[9][8].attacked
+    assert_equal spear_player.id, field[9][8].owner
+    assert_equal true, field[8][8].attacked
+    assert_equal spear_player.id, field[8][8].owner
+    assert_equal true, field[7][8].attacked
+    assert_equal spear_player.id, field[7][8].owner
+    assert_equal true, field[6][8].attacked
+    assert_equal spear_player.id, field[6][8].owner
+    assert_equal false, field[5][8].attacked
+
+    # 東方角への攻撃
+    reset_field
+    assert_equal true, spear_player.attack(direct: 1, field: field)
+    assert_equal true, field[10][9].attacked
+    assert_equal spear_player.id, field[10][9].owner
+    assert_equal true, field[10][10].attacked
+    assert_equal spear_player.id, field[10][10].owner
+    assert_equal true, field[10][11].attacked
+    assert_equal spear_player.id, field[10][11].owner
+    assert_equal false, field[10][7].attacked
+
+    # 北方角への攻撃
+    reset_field
+    assert_equal true, spear_player.attack(direct: 2, field: field)
+    assert_equal true, field[11][8].attacked
+    assert_equal spear_player.id, field[11][8].owner
+    assert_equal false, field[10][8].attacked
+    assert_equal false, field[9][8].attacked
+
+    # 西方向への攻撃
+    reset_field
+    assert_equal true, spear_player.attack(direct: 3, field: field)
+    assert_equal true, field[10][7].attacked
+    assert_equal spear_player.id, field[10][7].owner
+    assert_equal true, field[10][6].attacked
+    assert_equal spear_player.id, field[10][6].owner
+    assert_equal true, field[10][5].attacked
+    assert_equal spear_player.id, field[10][5].owner
+    assert_equal true, field[10][4].attacked
+    assert_equal spear_player.id, field[10][4].owner
+    assert_equal false, field[10][3].attacked
+    assert_equal false, field[10][9].attacked
   end
 end

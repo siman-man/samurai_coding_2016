@@ -1,6 +1,6 @@
 module SamurAI
   class Cell
-    attr_reader :status, :owner
+    attr_reader :status, :owner, :attacked
 
     NEUTRAL = 8
     UNKNOWN = 9
@@ -9,6 +9,7 @@ module SamurAI
       @owner = NEUTRAL
       @exist_kyokan = false
       @exist_samurai = false
+      @attacked = false
       @visible = Array.new(2, false)
     end
 
@@ -73,10 +74,16 @@ module SamurAI
       end
     end
 
+    def occupy(id:)
+      @attacked = true
+      update_owner(id: id)
+    end
+
     #
-    # セル情報をクリアする
+    # セル情報の初期化を行う
     #
     def clear
+      @attacked = false
       @exist_samurai = false
     end
   end

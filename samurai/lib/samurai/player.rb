@@ -4,6 +4,56 @@ module SamurAI
     attr_accessor :cure_period
 
     #
+    # 槍の攻撃範囲
+    #
+    SPEAR_ATTACK_RANGE = [
+      [0, 0, 0, 0, 1, 0, 0, 0, 0],
+      [0, 0, 0, 0, 1, 0, 0, 0, 0],
+      [0, 0, 0, 0, 1, 0, 0, 0, 0],
+      [0, 0, 0, 0, 1, 0, 0, 0, 0],
+      [8, 8, 8, 8, 0, 2, 2, 2, 2],
+      [0, 0, 0, 0, 4, 0, 0, 0, 0],
+      [0, 0, 0, 0, 4, 0, 0, 0, 0],
+      [0, 0, 0, 0, 4, 0, 0, 0, 0],
+      [0, 0, 0, 0, 4, 0, 0, 0, 0]
+    ].freeze
+
+    #
+    # 剣の攻撃範囲
+    #
+    SWORD_ATTACK_RANGE = [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 9, 0, 0, 0, 0],
+      [0, 0, 0, 8, 9, 1, 0, 0, 0],
+      [0, 0,12,12, 0, 3, 3, 0, 0],
+      [0, 0, 0, 4, 6, 2, 0, 0, 0],
+      [0, 0, 0, 0, 6, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ].freeze
+
+    #
+    # マサカリの攻撃範囲
+    #
+    AX_ATTACK_RANGE = [
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0,15,11,15, 0, 0, 0],
+      [0, 0, 0,13, 0, 7, 0, 0, 0],
+      [0, 0, 0,15,14,15, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ].freeze
+
+    #
+    # 攻撃範囲をまとめたリスト
+    #
+    ATTACK_RANGE_LIST = [SPEAR_ATTACK_RANGE, SWORD_ATTACK_RANGE, AX_ATTACK_RANGE]
+
+    #
     # プレイヤーの状態を示す
     # 0: 潜伏状態
     # 1: 潜伏していない状態
@@ -11,13 +61,26 @@ module SamurAI
     HIDE = 0
     NOHIDE = 1
 
-    SIGHT_RANGE = 5 # 視界の範囲
+    #
+    # 視界の範囲
+    #
+    SIGHT_RANGE = 5
+
+    #
+    # 職業タイプ
+    #   0. 槍
+    #   1. 剣
+    #   2. マサカリ
+    #
+    SPEAR = 0
+    SWORD = 1
+    AX = 2
 
     #
     # 方角は「南、東、北、西」の順番
     #
-    DY = [1, 0, -1, 0]
-    DX = [0, 1, 0, -1]
+    DY = [1, 0, -1, 0].freeze
+    DX = [0, 1, 0, -1].freeze
 
     def initialize(id:, x:, y:)
       @y = y
@@ -39,7 +102,7 @@ module SamurAI
     #
     # プレイヤーの戦績を返す
     #
-    def data
+    def ranking_data
       [ranking, point].join(' ')
     end
 
@@ -75,6 +138,26 @@ module SamurAI
         else
           @y = ny
           @x = nx
+        end
+      end
+
+      true
+    end
+
+    #
+    # 攻撃（占領）
+    #   1. 画面外は無視
+    #   2. 攻撃範囲のフィールドにチェックをつける
+    #   3. 潜伏状態では攻撃出来ない
+    #
+    def attack(direct:, field:)
+      return false if hide?
+
+      ATTACK_RANGE_LIST[job].each.with_index(y-4) do |row, ny|
+        row.each.with_index(x-4) do |mask, nx|
+          if field.inside?(y: ny, x: nx) && ((mask >> direct) & 1) == 1
+            field[ny][nx].occupy(id: id)
+          end
         end
       end
 
@@ -120,6 +203,13 @@ module SamurAI
     #
     def can_visible?(y:, x:)
       (@x - x).abs + (@y - y).abs <= SIGHT_RANGE
+    end
+
+    #
+    # プレイヤーの職業
+    #
+    def job
+      id % 3
     end
   end
 end
