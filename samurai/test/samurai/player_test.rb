@@ -53,6 +53,20 @@ class TestSamuraiPlayer < Minitest::Test
     assert_equal 0, player.cure_period
   end
 
+  def test_go_back_home
+    player = SamurAI::Player.new(id: 0, y: 10, x: 8)
+
+    player.move(direct: 0, field: field)
+    player.move(direct: 1, field: field)
+
+    assert_equal 11, player.y
+    assert_equal 9, player.x
+
+    player.go_back_home
+    assert_equal 10, player.y
+    assert_equal 8, player.x
+  end
+
   def test_can_visible?
     assert_equal true, player.can_visible?(y: 10, x: 7)
     assert_equal true, player.can_visible?(y: 10, x: 3)

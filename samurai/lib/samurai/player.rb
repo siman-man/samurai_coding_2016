@@ -85,6 +85,8 @@ module SamurAI
     def initialize(id:, x:, y:)
       @y = y
       @x = x
+      @home_y = y
+      @home_x = x
       @id = id
       @point = 0
       @status = NOHIDE
@@ -97,6 +99,14 @@ module SamurAI
     #
     def info
       [y, x, status].join(' ')
+    end
+
+    #
+    # 居館に戻る
+    #
+    def go_back_home
+      @y = @home_y
+      @x = @home_x
     end
 
     #
