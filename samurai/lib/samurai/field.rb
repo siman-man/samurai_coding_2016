@@ -39,10 +39,16 @@ module SamurAI
       @field[index]
     end
 
+    #
+    # フィールドの内側にいるかを判定する
+    #
     def inside?(y:, x:)
       0 <= y && y < height && 0 <= x && x < width
     end
 
+    #
+    # フィールドの外側にいるかどうかを判定する
+    #
     def outside?(y:, x:)
       y < 0 || height <= y || x < 0 || width <= x
     end

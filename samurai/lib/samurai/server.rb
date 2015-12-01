@@ -30,6 +30,9 @@ module SamurAI
       init_player_list
     end
 
+    #
+    # フィールドの作成
+    #
     def create_field(width:, height:)
       @field = SamurAI::Field.new(width: width, height: height)
     end
