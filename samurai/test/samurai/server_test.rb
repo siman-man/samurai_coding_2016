@@ -75,6 +75,7 @@ class TestSamuraiServer < Minitest::Test
   def test_exec_operation_01
     reset_field
     spear_player = SamurAI::Player.new(id: 0, y: 5, x: 5)
+    server.field[6][5].occupy(id: 0)
 
     #
     # 1. 南方向に移動
@@ -93,10 +94,26 @@ class TestSamuraiServer < Minitest::Test
     assert_equal true, server.field[8][5].attacked
     assert_equal true, server.field[9][5].attacked
     assert_equal true, server.field[10][5].attacked
-    assert_equal false, server.field[6][5].attacked
     assert_equal false, server.field[11][5].attacked
 
     # 潜伏している
+    assert_equal true, spear_player.hide?
+  end
+
+  #
+  # 命令リストの実行テスト その2
+  #
+  def test_exec_operation_02
+    reset_field
+    spear_player = SamurAI::Player.new(id: 0, y: 5, x: 5)
+    server.field[5][5].occupy(id: 0)
+
+    #
+    # 潜伏と顕現を繰り返す
+    #
+    operation_list = [9, 10, 9, 10, 9, 10, 9]
+    server.exec_operation(player: spear_player, operation_list: operation_list)
+
     assert_equal true, spear_player.hide?
   end
 end

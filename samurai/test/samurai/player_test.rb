@@ -28,7 +28,12 @@ class TestSamuraiPlayer < Minitest::Test
   end
 
   def test_hide
-    player.hide
+    # 味方との領地では潜伏出来ない
+    assert_equal false, player.hide(field: field)
+    assert_equal false, player.hide?
+
+    field[10][8].occupy(id: 0)
+    assert_equal true, player.hide(field: field)
     assert_equal true, player.hide?
   end
 
@@ -36,7 +41,7 @@ class TestSamuraiPlayer < Minitest::Test
     assert_equal true, player.show_up(field: field)
     assert_equal false, player.hide?
 
-    player.hide
+    player.hide(field: field)
     field[10][8].set_samurai(id: 1)
     assert_equal false, player.show_up(field: field)
   end
@@ -136,7 +141,8 @@ class TestSamuraiPlayer < Minitest::Test
   def test_move_hide
     # フィールドとプレイヤーを初期化
     reset_data
-    player.hide
+    field[10][8].occupy(id: 0)
+    player.hide(field: field)
 
     # 隠れている状態では味方の陣地以外は行動出来ない
     assert_equal false, player.move(direct: 0, field: field)
@@ -229,7 +235,8 @@ class TestSamuraiPlayer < Minitest::Test
   def test_spear_attack
     reset_field
     spear_player = SamurAI::Player.new(id: 0, y: 10, x: 8)
-    spear_player.hide
+    field[10][8].occupy(id: 0)
+    spear_player.hide(field: field)
 
     # 潜伏中は攻撃出来ない
     assert_equal false, spear_player.attack(direct: 0, field: field)

@@ -175,10 +175,16 @@ module SamurAI
     end
 
     #
-    # 潜伏
+    # 潜伏する。味方の陣地以外の場所では出来ない
     #
-    def hide
-      @status = HIDE
+    def hide(field:)
+      if field[y][x].owner_group == group_id
+        @status = HIDE
+      else
+        return false
+      end
+
+      true
     end
 
     #

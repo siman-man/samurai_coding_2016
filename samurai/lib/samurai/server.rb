@@ -56,11 +56,11 @@ module SamurAI
             cost += 4
           # 潜伏
           when 9
-            player.hide
+            player.hide(field: field)
             cost += 1
           # 顕現
           when 10
-            player.show_up
+            player.show_up(field: field)
             cost += 1
           else
         end
