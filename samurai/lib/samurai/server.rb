@@ -47,12 +47,12 @@ module SamurAI
           # 占領
           when 1..4
             direct = operation - 1
-            player.move(direct: direct, field: field)
+            player.attack(direct: direct, field: field)
             cost += 2
           # 行動
           when 5..8
             direct = operation - 5
-            player.attack(direct: direct, field: field)
+            player.move(direct: direct, field: field)
             cost += 4
           # 潜伏
           when 9

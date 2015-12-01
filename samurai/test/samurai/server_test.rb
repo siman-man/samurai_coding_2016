@@ -69,9 +69,34 @@ class TestSamuraiServer < Minitest::Test
     assert_equal [1, 2, 3, 4, 5, 6, 7], server.parse_operation(operation)
   end
 
+  #
+  # 命令リストの実行テスト その1
+  #
   def test_exec_operation_01
     reset_field
+    spear_player = SamurAI::Player.new(id: 0, y: 5, x: 5)
 
+    #
+    # 1. 南方向に移動
+    # 2. 南方向に攻撃
+    # 3. 潜伏
+    #
     operation_list = [5, 1, 9, 0, 0, 0, 0]
+    server.exec_operation(player: spear_player, operation_list: operation_list)
+
+    # 南方向に行動出来ている
+    assert_equal 6, spear_player.y
+    assert_equal 5, spear_player.x
+
+    # 南方向に攻撃出来ている
+    assert_equal true, server.field[7][5].attacked
+    assert_equal true, server.field[8][5].attacked
+    assert_equal true, server.field[9][5].attacked
+    assert_equal true, server.field[10][5].attacked
+    assert_equal false, server.field[6][5].attacked
+    assert_equal false, server.field[11][5].attacked
+
+    # 潜伏している
+    assert_equal true, spear_player.hide?
   end
 end
