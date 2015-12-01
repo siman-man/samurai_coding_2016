@@ -52,5 +52,17 @@ module SamurAI
     def outside?(y:, x:)
       y < 0 || height <= y || x < 0 || width <= x
     end
+
+    #
+    # フィールド情報のクリアを行う
+    # フィールドの各Cellに対してclearメソッドを呼び出す
+    #
+    def clear
+      @field.each do |row|
+        row.each do |cell|
+          cell.clear
+        end
+      end
+    end
   end
 end

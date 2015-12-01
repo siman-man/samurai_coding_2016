@@ -38,6 +38,42 @@ module SamurAI
     end
 
     #
+    # ターンの一番最初にあるフェーズです。
+    #   1. 各プレイヤーの体力を1回復します
+    #
+    def start_phase
+      player_list.each do |player|
+        player.cure
+      end
+    end
+
+    #
+    # ゲームの状態をクリアする
+    #
+    def clear_phase
+      field.clear
+    end
+
+    #
+    # ターンの終わりに情報を整理します
+    #
+    def final_phase
+    end
+
+    #
+    # ユーザが行動を行うフェーズです
+    # ユーザから受け取った命令リストを元にゲームの盤面を更新します
+    #
+    def action_phase
+    end
+
+    #
+    # ゲームの状態を更新する
+    #
+    def update_phase
+    end
+
+    #
     # 渡された命令を処理する。
     # コストをオーバーすると失敗
     # @params operation_list 命令リスト
