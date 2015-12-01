@@ -25,7 +25,46 @@ module SamurAI
       @healing_time = [*12..48].sample
       @current_turn = 0
 
-      @field = Field.new(width: width, height: height)
+      create_field(width: width, height: height)
+      init_kyokan_list
+      init_player_list
+    end
+
+    def create_field(width:, height:)
+      @field = SamurAI::Field.new(width: width, height: height)
+    end
+
+    #
+    # 渡された命令を処理する。
+    # コストをオーバーすると失敗
+    # @params operation_list 命令リスト
+    #
+    def exec_operation(player:, operation_list:)
+      cost = 0
+
+      operation_list.each do |operation|
+        case operation
+          # 占領
+          when 1..4
+            direct = operation - 1
+            player.move(direct: direct, field: field)
+            cost += 2
+          # 行動
+          when 5..8
+            direct = operation - 5
+            player.attack(direct: direct, field: field)
+            cost += 4
+          # 潜伏
+          when 9
+            player.hide
+            cost += 1
+          # 顕現
+          when 10
+            player.show_up
+            cost += 1
+          else
+        end
+      end
     end
 
     #
@@ -52,14 +91,29 @@ module SamurAI
       cell = field[y][x]
 
       cell.build_kyokan(id: kyokan_id)
-      kyokan_list << Kyokan.new(kyokan_id, x, y)
+      kyokan_list << SamurAI::Kyokan.new(kyokan_id, x, y)
     end
 
     #
-    # プレイヤー情報の初期化を行う
+    # プレイヤー情報の初期化を行う。居館の位置に各プレイヤーをセット
     #
     def init_player_list
       @player_list = []
+
+      kyokan_list.each do |kyokan|
+        player_id = kyokan.id
+        y = kyokan.y
+        x = kyokan.x
+
+        create_player(id: player_id, y: y, x: x)
+      end
+    end
+
+    #
+    # プレイヤーの作成
+    #
+    def create_player(id:, y:, x:)
+      @player_list[id] = SamurAI::Player.new(id: id, y: y, x: x)
     end
 
     # 試合を始める

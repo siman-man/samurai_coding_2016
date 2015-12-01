@@ -9,6 +9,10 @@ class TestSamuraiServer < Minitest::Test
     @server.init_game
   end
 
+  def reset_field
+    @server.create_field(width: 10, height: 12)
+  end
+
   # 初期化の時は0になっている
   def test_current_turn
     assert_equal 0, server.current_turn
@@ -41,9 +45,19 @@ class TestSamuraiServer < Minitest::Test
     assert_equal 6, server.kyokan_list.size
 
     server.kyokan_list.each do |kyokan|
-      assert_includes 0...6, kyokan.id
+      assert_includes 0..5, kyokan.id
       assert_includes 0...server.width, kyokan.x
       assert_includes 0...server.height, kyokan.y
+    end
+  end
+
+  def test_init_player_list
+    assert_equal 6, server.player_list.size
+
+    server.player_list.each do |player|
+      assert_includes 0..5, player.id
+      assert_includes 0...server.width, player.x
+      assert_includes 0...server.height, player.y
     end
   end
 
@@ -53,5 +67,11 @@ class TestSamuraiServer < Minitest::Test
 
     operation = "1 2 3 4 5 6 7"
     assert_equal [1, 2, 3, 4, 5, 6, 7], server.parse_operation(operation)
+  end
+
+  def test_exec_operation_01
+    reset_field
+
+    operation_list = [5, 1, 9, 0, 0, 0, 0]
   end
 end
