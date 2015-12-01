@@ -74,6 +74,9 @@ module SamurAI
       end
     end
 
+    #
+    # 指定したIDで占領する
+    #
     def occupy(id:)
       @attacked = true
       update_owner(id: id)
