@@ -93,9 +93,29 @@ module SamurAI
       @status = NOHIDE
       @group_id = id / 3 # [0,1,2], [3,4,5] でグループ分け
       @cure_period = 0
+
+      @player = load(name: name)
     end
 
+    #
+    # プレイヤーをロードする
+    #
+    def load(name:)
+      IO.popen("../../players/#{name}", 'r+')
+    end
+
+    #
+    # プレイヤーに対して情報を送る
+    #
     def input(params)
+      @player.puts(params)
+    end
+
+    #
+    # プレイヤーからの情報を受取る
+    #
+    def response
+      @player.gets
     end
 
     #
