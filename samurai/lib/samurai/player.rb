@@ -1,6 +1,6 @@
 module SamurAI
   class Player
-    attr_reader :ranking, :point, :status, :y, :x, :id, :group_id
+    attr_reader :ranking, :point, :status, :y, :x, :id, :group_id, :name
     attr_accessor :cure_period
 
     #
@@ -82,16 +82,20 @@ module SamurAI
     DY = [1, 0, -1, 0].freeze
     DX = [0, 1, 0, -1].freeze
 
-    def initialize(id:, x:, y:)
+    def initialize(id:, name:, x:, y:)
       @y = y
       @x = x
       @home_y = y
       @home_x = x
       @id = id
+      @name = name
       @point = 0
       @status = NOHIDE
       @group_id = id / 3 # [0,1,2], [3,4,5] でグループ分け
       @cure_period = 0
+    end
+
+    def input(params)
     end
 
     #

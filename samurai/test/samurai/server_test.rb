@@ -74,7 +74,7 @@ class TestSamuraiServer < Minitest::Test
   #
   def test_exec_operation_01
     reset_field
-    spear_player = SamurAI::Player.new(id: 0, y: 5, x: 5)
+    spear_player = SamurAI::Player.new(id: 0, name: 'siman', y: 5, x: 5)
     server.field[6][5].occupy(id: 0)
 
     #
@@ -105,7 +105,7 @@ class TestSamuraiServer < Minitest::Test
   #
   def test_exec_operation_02
     reset_field
-    spear_player = SamurAI::Player.new(id: 0, y: 5, x: 5)
+    spear_player = SamurAI::Player.new(id: 0, name: 'siman', y: 5, x: 5)
     server.field[5][5].occupy(id: 0)
 
     #

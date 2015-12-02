@@ -1,10 +1,19 @@
 module SamurAI
 	class Server
 		attr_reader :max_turn, :width, :height, :field, :healing_time,
-                :kyokan_list, :player_list, :current_turn
+                :kyokan_list, :player_list, :current_turn, :current_player,
+                :player_order
 
     # 参加プレイヤーの最大人数
     MAX_PLAYER_NUM = 6
+
+    # プレイヤーのID
+    A0 = 0
+    A1 = 1
+    A2 = 2
+    B0 = 3
+    B1 = 4
+    B2 = 5
 
 		def initialize
     end
@@ -25,9 +34,22 @@ module SamurAI
       @healing_time = [*12..48].sample
       @current_turn = 0
 
+      # プレイヤーが行動する順序
+      @player_order = [A0, B0, B1, A1, A2, B2, B0, A0, A1, B1, B2, A2].cycle
+
       create_field(width: width, height: height)
       init_kyokan_list
       init_player_list
+    end
+
+    #
+    # プレイヤーが行う行動
+    #
+    def player_action
+      start_phase
+      clear_phase
+      action_phase
+      update_phase
     end
 
     #
@@ -55,22 +77,37 @@ module SamurAI
     end
 
     #
-    # ターンの終わりに情報を整理します
-    #
-    def final_phase
-    end
-
-    #
     # ユーザが行動を行うフェーズです
     # ユーザから受け取った命令リストを元にゲームの盤面を更新します
     #
     def action_phase
+      @current_player = player_list[player_order.next]
+
+      current_player.input(input_params(current_player.id))
     end
 
     #
     # ゲームの状態を更新する
+    #   1. 盤面を調べて、攻撃されたマスに他のプレイヤーがいた場合は居館に戻して治療期間を設定する
     #
     def update_phase
+      player_list.each do |player|
+        next if current_player.id == player.id
+
+        cell = field[player.y][player.x]
+
+        if cell.exist_samurai? && cell.atacked
+          player = player_list[cell.samurai_id]
+          player.go_back_home
+          player.cure_period = healing_time
+        end
+      end
+    end
+
+    #
+    # ターンの終わりに情報を整理します
+    #
+    def final_phase
     end
 
     #
@@ -144,15 +181,15 @@ module SamurAI
         y = kyokan.y
         x = kyokan.x
 
-        create_player(id: player_id, y: y, x: x)
+        create_player(id: player_id, name: 'hoge', y: y, x: x)
       end
     end
 
     #
     # プレイヤーの作成
     #
-    def create_player(id:, y:, x:)
-      @player_list[id] = SamurAI::Player.new(id: id, y: y, x: x)
+    def create_player(id:, name:, y:, x:)
+      @player_list[id] = SamurAI::Player.new(id: id, name: name, y: y, x: x)
     end
 
     # 試合を始める

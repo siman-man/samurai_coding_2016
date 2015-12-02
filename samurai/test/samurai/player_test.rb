@@ -5,12 +5,12 @@ class TestSamuraiPlayer < Minitest::Test
   attr_reader :player, :field
 
   def setup
-    @player = SamurAI::Player.new(id: 0, y: 10, x: 8)
+    @player = SamurAI::Player.new(id: 0, name: 'siman', y: 10, x: 8)
     @field = SamurAI::Field.new(width: 15, height: 12)
   end
 
   def reset_data
-    @player = SamurAI::Player.new(id: 0, y: 10, x: 8)
+    @player = SamurAI::Player.new(id: 0, name: 'siman', y: 10, x: 8)
     @field = SamurAI::Field.new(width: 15, height: 12)
   end
 
@@ -59,7 +59,7 @@ class TestSamuraiPlayer < Minitest::Test
   end
 
   def test_go_back_home
-    player = SamurAI::Player.new(id: 0, y: 10, x: 8)
+    player = SamurAI::Player.new(id: 0, name: 'siman', y: 10, x: 8)
 
     player.move(direct: 0, field: field)
     player.move(direct: 1, field: field)
@@ -211,22 +211,22 @@ class TestSamuraiPlayer < Minitest::Test
   end
 
   def test_job
-    spear_player = SamurAI::Player.new(id: 0, y: 10, x: 8)
-    spear_player2 = SamurAI::Player.new(id: 3, y: 10, x: 8)
+    spear_player = SamurAI::Player.new(id: 0, name: 'spear', y: 10, x: 8)
+    spear_player2 = SamurAI::Player.new(id: 3, name: 'spear2', y: 10, x: 8)
 
     assert_equal SamurAI::Player::SPEAR, spear_player.job
     assert_equal SamurAI::Player::SPEAR, spear_player2.job
 
 
-    sword_player = SamurAI::Player.new(id: 1, y: 10, x: 8)
-    sword_player2 = SamurAI::Player.new(id: 4, y: 10, x: 8)
+    sword_player = SamurAI::Player.new(id: 1, name: 'sword', y: 10, x: 8)
+    sword_player2 = SamurAI::Player.new(id: 4, name: 'sword2', y: 10, x: 8)
 
     assert_equal SamurAI::Player::SWORD, sword_player.job
     assert_equal SamurAI::Player::SWORD, sword_player2.job
 
 
-    ax_player = SamurAI::Player.new(id: 2, y: 10, x: 8)
-    ax_player2 = SamurAI::Player.new(id: 5, y: 10, x: 8)
+    ax_player = SamurAI::Player.new(id: 2, name: 'ax', y: 10, x: 8)
+    ax_player2 = SamurAI::Player.new(id: 5, name: 'ax2', y: 10, x: 8)
 
     assert_equal SamurAI::Player::AX, ax_player.job
     assert_equal SamurAI::Player::AX, ax_player2.job
@@ -234,7 +234,7 @@ class TestSamuraiPlayer < Minitest::Test
 
   def test_spear_attack
     reset_field
-    spear_player = SamurAI::Player.new(id: 0, y: 10, x: 8)
+    spear_player = SamurAI::Player.new(id: 0, name: 'spear', y: 10, x: 8)
     field[10][8].occupy(id: 0)
     spear_player.hide(field: field)
 
@@ -291,7 +291,7 @@ class TestSamuraiPlayer < Minitest::Test
 
   def test_sword_attack
     reset_field
-    sword_player = SamurAI::Player.new(id: 1, y: 10, x: 8)
+    sword_player = SamurAI::Player.new(id: 1, name: 'sword', y: 10, x: 8)
 
     # 南方向への攻撃
     assert_equal true, sword_player.attack(direct: 0, field: field)
@@ -344,7 +344,7 @@ class TestSamuraiPlayer < Minitest::Test
 
   def test_ax_attack
     reset_field
-    ax_player = SamurAI::Player.new(id: 2, y: 10, x: 8)
+    ax_player = SamurAI::Player.new(id: 2, name: 'ax', y: 10, x: 8)
 
     # 南方向への攻撃
     assert_equal true, ax_player.attack(direct: 0, field: field)
@@ -399,7 +399,7 @@ class TestSamuraiPlayer < Minitest::Test
 
   def test_attack_not_occupy_kyokan
     reset_field
-    ax_player = SamurAI::Player.new(id: 2, y: 10, x: 8)
+    ax_player = SamurAI::Player.new(id: 2, name: 'ax', y: 10, x: 8)
 
     field[11][8].build_kyokan(id: 1)
     ax_player.attack(direct: 0, field: field)

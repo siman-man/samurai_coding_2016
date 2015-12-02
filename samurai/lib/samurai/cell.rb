@@ -1,6 +1,6 @@
 module SamurAI
   class Cell
-    attr_reader :status, :owner, :attacked
+    attr_reader :status, :owner, :attacked, :samurai_id
 
     NEUTRAL = 8
     UNKNOWN = 9
@@ -8,7 +8,7 @@ module SamurAI
     def initialize
       @owner = NEUTRAL
       @exist_kyokan = false
-      @exist_samurai = false
+      @samurai_id = nil
       @attacked = false
       @visible = Array.new(2, false)
     end
@@ -24,14 +24,14 @@ module SamurAI
     # 潜伏していないサムライが存在しているかどうかを調べる
     #
     def exist_samurai?
-      @exist_samurai
+      @samurai_id
     end
 
     #
     # サムライがいることを更新
     #
     def set_samurai(id:)
-      @exist_samurai = id
+      @samurai_id = id
     end
 
     #
@@ -87,7 +87,7 @@ module SamurAI
     #
     def clear
       @attacked = false
-      @exist_samurai = false
+      @samurai_id = nil
     end
   end
 end
