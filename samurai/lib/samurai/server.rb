@@ -53,11 +53,19 @@ module SamurAI
     # ゲームを開始
     #
     def run
+      # プレイヤー情報を取得
+      player_list.each do |player|
+        player.load
+      end
+
       # max_turnの数繰り返す
       max_turn.times do
         @current_player = player_order.next
         player_action
       end
+
+      # 結果を集計 & 表示
+      show_result
     end
 
     #
@@ -162,6 +170,15 @@ module SamurAI
     # 最終結果
     #
     def show_result
+      cell_owner_count = Hash.new(0)
+
+      field.each do |row|
+        row.each do |cell|
+          cell_owner_count[cell.owner] += 1
+        end
+      end
+
+      p cell_owner_count
     end
 
     #
