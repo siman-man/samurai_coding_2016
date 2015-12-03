@@ -43,6 +43,24 @@ module SamurAI
     end
 
     #
+    # フィールドの作成
+    #
+    def create_field(width:, height:)
+      @field = SamurAI::Field.new(width: width, height: height)
+    end
+
+    #
+    # ゲームを開始
+    #
+    def run
+      # max_turnの数繰り返す
+      max_turn.times do
+        @current_player = player_order.next
+        player_action
+      end
+    end
+
+    #
     # プレイヤーが行う行動
     #
     def player_action
@@ -50,13 +68,6 @@ module SamurAI
       clear_phase
       action_phase
       update_phase
-    end
-
-    #
-    # フィールドの作成
-    #
-    def create_field(width:, height:)
-      @field = SamurAI::Field.new(width: width, height: height)
     end
 
     #
@@ -83,7 +94,17 @@ module SamurAI
     def action_phase
       @current_player = player_list[player_order.next]
 
+      # プレイヤーに対して情報を送信
       current_player.input(input_params(current_player.id))
+
+      # プレイヤーからの情報を受け取る
+      output = current_player.response
+
+      # 命令を解析
+      operation_list = parse_operation(output)
+
+      # 命令を実行
+      exec_operation(player: current_player, operation_list: operation_list)
     end
 
     #
@@ -102,12 +123,6 @@ module SamurAI
           player.cure_period = healing_time
         end
       end
-    end
-
-    #
-    # ターンの終わりに情報を整理します
-    #
-    def final_phase
     end
 
     #
@@ -141,6 +156,12 @@ module SamurAI
           else
         end
       end
+    end
+
+    #
+    # 最終結果
+    #
+    def show_result
     end
 
     #
@@ -181,7 +202,7 @@ module SamurAI
         y = kyokan.y
         x = kyokan.x
 
-        create_player(id: player_id, name: 'hoge', y: y, x: x)
+        create_player(id: player_id, name: 'siman', y: y, x: x)
       end
     end
 
