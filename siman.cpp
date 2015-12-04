@@ -86,6 +86,12 @@ class SamurAI{
 		 */
 		void init(){
 			scanf("%d %d %d %d %d", &g_max_turn, &g_playerId, &g_groupId, &g_width, &g_height);
+			fprintf(stderr,"ready =>\n");
+
+			fprintf(stderr,"max_turn => %d\n", g_max_turn);
+			fprintf(stderr,"player id => %d\n", g_playerId);
+			fprintf(stderr,"group id => %d\n", g_groupId);
+			fprintf(stderr,"width: %d, height: %d\n", g_width, g_height);
 
 			// 居館の位置を取得（ついでにユーザの初期位置を設定）
 			for(int id = 0; id < MAX_PLAYER_NUM; id++){
@@ -106,6 +112,8 @@ class SamurAI{
 
 				PLAYER *player = getPlayer(id);
 				scanf("%d %d", &rank, &score);
+
+				fprintf(stderr,"id: %d, rank: %d, score: %d\n", id, rank, score);
 			}
 
 			// 準備完了の通知をサーバ側に足して行う
@@ -116,11 +124,14 @@ class SamurAI{
 		 * フィールド情報の更新を行う
 		 */
 		void updateFieldData(){
+			fprintf(stderr,"updateFieldData =>\n");
 			// 現在のターンの取得
 			scanf("%d", &g_currentTurn);
+			fprintf(stderr,"currentTurn => %d\n", g_currentTurn);
 
 			// 治療期間の取得
 			scanf("%d", &g_curePeriod);
+			fprintf(stderr,"curePeriod => %d\n", g_curePeriod);
 
 			// 各プレイヤーの情報を更新
 			for(int id = 0; id < MAX_PLAYER_NUM; id++){
@@ -130,6 +141,8 @@ class SamurAI{
 
 				PLAYER *player = getPlayer(id);
 				scanf("%d %d %d", &y, &x, &status);
+
+				fprintf(stderr,"id: %d, y: %d, x: %d, status: %d\n", id, y, x, status);
 
 				player->update(y, x, status);
 			}
@@ -155,8 +168,10 @@ class SamurAI{
      * AIの実行
      */
 		void run(){
-			updateFieldData();
-			move();
+			while(true){
+				updateFieldData();
+				move();
+			}
 		}
 
 		PLAYER *getPlayer(int id){

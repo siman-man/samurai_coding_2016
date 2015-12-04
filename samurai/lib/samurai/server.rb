@@ -28,7 +28,8 @@ module SamurAI
     #   6. フィールドの状態を初期化
     #
     def init_game
-      @max_turn = 12 * [*1..84].sample
+      @max_turn = 12
+      #@max_turn = 12 * [*1..84].sample
       @width = [*10..20].sample
       @height = [*10..20].sample
       @healing_time = [*12..48].sample
@@ -53,9 +54,14 @@ module SamurAI
     # ゲームを開始
     #
     def run
+			# ゲーム情報を初期化
+			init_game
+
       # プレイヤー情報を取得
       player_list.each do |player|
         player.load
+				player.input(first_input_params(id: player.id, group_id: player.group_id))
+				p player.response
       end
 
       # max_turnの数繰り返す
@@ -100,6 +106,7 @@ module SamurAI
     # ユーザから受け取った命令リストを元にゲームの盤面を更新します
     #
     def action_phase
+			puts "action phase =>"
       @current_player = player_list[player_order.next]
 
       # プレイヤーに対して情報を送信
@@ -120,6 +127,8 @@ module SamurAI
     #   1. 盤面を調べて、攻撃されたマスに他のプレイヤーがいた場合は居館に戻して治療期間を設定する
     #
     def update_phase
+			puts "update phase =>"
+
       player_list.each do |player|
         next if current_player.id == player.id
 
@@ -172,9 +181,9 @@ module SamurAI
     def show_result
       cell_owner_count = Hash.new(0)
 
-      field.each do |row|
-        row.each do |cell|
-          cell_owner_count[cell.owner] += 1
+			(0...height).each do |y|
+        (0...width).each do |x|
+          cell_owner_count[field[y][x].owner] += 1
         end
       end
 
@@ -219,7 +228,7 @@ module SamurAI
         y = kyokan.y
         x = kyokan.x
 
-        create_player(id: player_id, name: 'siman', y: y, x: x)
+        create_player(id: player_id, name: "siman#{player_id+1}", y: y, x: x)
       end
     end
 
@@ -236,7 +245,7 @@ module SamurAI
     end
 
     # 一番最初に渡すパラメータ
-    def first_input_params(group_id:, id:)
+    def first_input_params(id:, group_id:)
       params = []
 
       # 総ターン数 所属 ID 横幅 縦幅
@@ -249,9 +258,10 @@ module SamurAI
 
       # 各サムライの成績を入れる
       player_list.each do |samurai|
-        params << samurai.data
+        params << samurai.ranking_data
       end
 
+      puts params.join("\n")
       params.join("\n")
     end
 
@@ -274,6 +284,7 @@ module SamurAI
       # フィールド情報
       params << field.info(player.group_id)
 
+      puts params.join("\n")
       params.join("\n")
     end
 

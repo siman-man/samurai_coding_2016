@@ -90,6 +90,7 @@ module SamurAI
       @id = id
       @name = name
       @point = 0
+			@ranking = id
       @status = NOHIDE
       @group_id = id / 3 # [0,1,2], [3,4,5] でグループ分け
       @cure_period = 0
@@ -98,8 +99,8 @@ module SamurAI
     #
     # プレイヤーをロードする
     #
-    def load(name:)
-      IO.popen("players/#{name}", 'r+')
+    def load
+      @player = IO.popen("players/#{name}", 'r+')
     end
 
     #

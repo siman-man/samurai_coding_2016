@@ -1,0 +1,6 @@
+#!ruby
+$LOAD_PATH << File.expand_path('../../lib', __FILE__)
+
+require 'samurai'
+
+p SamurAI::Server.new.run
