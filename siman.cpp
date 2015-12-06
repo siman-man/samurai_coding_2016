@@ -337,13 +337,36 @@ class SamurAI{
     }
 
     /**
+     * 命令の処理
+     */
+    bool exec_operation(vector<int> operation_list){
+      int size = operation_list.size();
+
+      for(int i = 0; i < size; i++){
+        int operation = operation_list[i];
+
+        if(operation == 0){
+          // no action
+        }else if(operation <= 4){
+          attack(operation - 1);
+        }else if(operation <= 8){
+          move(operation - 5);
+        }else if(operation == 9){
+        }else{
+        }
+      }
+
+      return true;
+    }
+
+    /**
      * 移動
      */
     bool move(int direct){
       PLAYER *my = getPlayer(g_playerId);
 
-      int ny = my->y + DY[direct-5];
-      int nx = my->x + DX[direct-5];
+      int ny = my->y + DY[direct];
+      int nx = my->x + DX[direct];
 
       if(isInside(ny,nx)){
         my->y = ny;
@@ -375,6 +398,34 @@ class SamurAI{
       }
 
       return true;
+    }
+
+    /**
+     * 潜伏
+     */
+    bool hide(){
+      PLAYER *my = getPlayer(g_playerId);
+
+      if(can_hide(my->y, my->x)){
+        my->status = 1;
+        return true;
+      }else{
+        return false;
+      }
+    }
+
+    /**
+     * 顕現
+     */
+    bool show_up(){
+      PLAYER *my = getPlayer(g_playerId);
+      
+      if(can_show_up(my->y, my->x)){
+        my->status = 0;
+        return true;
+      }else{
+        return false;
+      }
     }
 
     /**
@@ -462,6 +513,19 @@ class SamurAI{
      */
     inline bool isInside(int y, int x){
       return (0 <= y && y < g_height && 0 <= x && x < g_width);
+    }
+
+    /*
+     * 潜伏できるかどうかを返す
+     */
+    inline bool can_hide(int y, int x){
+      int z = getZ(y,x);
+
+      if(g_field[z] <= 7 && g_field[z]/3 == g_groupId){
+        return true;
+      }else{
+        return false;
+      }
     }
 
     /*
