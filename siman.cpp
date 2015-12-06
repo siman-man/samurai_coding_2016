@@ -32,6 +32,18 @@ unsigned long long xor128(){
   return (rw=(rw^(rw>>19))^(rt^(rt>>8)));
 }
 
+struct KYOKAN{
+  int id;       // 居館番号
+  int y;        // y座標
+  int x;        // x座標
+
+  KYOKAN(int id = UNKNOWN, int y = UNKNOWN, int x = UNKNOWN){
+    this->id = id;
+    this->y = y;
+    this->x = x;
+  }
+};
+
 struct PLAYER{
   int id;				// サムライ番号
   int y;				// 現在のy座標
@@ -40,6 +52,8 @@ struct PLAYER{
   int homeY;		// 居館のy座標
   int homeX; 		// 居館のx座標
   int status; 	// 潜伏状態かどうか
+  int rank;     // 現在のランキング
+  int score;    // 現在のスコア
 
   PLAYER(int id = UNKNOWN){
     this->id = id;
@@ -76,6 +90,9 @@ const int MAX_HEIGHT = 20;
 
 // プレイヤーのリスト
 PLAYER g_playerList[MAX_PLAYER_NUM];
+
+// 居館のリスト
+KYOKAN g_kyokanList[MAX_PLAYER_NUM];
 
 // 自分のプレイヤー番号
 int g_playerId;
@@ -256,15 +273,20 @@ class SamurAI{
       fprintf(stderr,"width: %d, height: %d\n", g_width, g_height);
 
       // 居館の位置を取得（ついでにユーザの初期位置を設定）
-      for(int id = 0; id < MAX_PLAYER_NUM; id++){
+      for(int player_id = 0; player_id < MAX_PLAYER_NUM; player_id++){
         int homeY;
         int homeX;
 
-        PLAYER player(id);
+        KYOKAN *kyokan = getKyokan(player_id);
+        PLAYER *player = getPlayer(player_id);
         scanf("%d %d", &homeY, &homeX);
 
+        kyokan->id = player_id;
+        kyokan->y = homeY;
+        kyokan->x = homeX;
+
         // プレイヤーの初期位置を初期化
-        player.setHomePosition(homeY, homeX);
+        player->setHomePosition(homeY, homeX);
       }
 
       // 各プレイヤーの戦績を取得
@@ -274,6 +296,9 @@ class SamurAI{
 
         PLAYER *player = getPlayer(id);
         scanf("%d %d", &rank, &score);
+
+        player->rank = rank;
+        player->score = score;
 
         fprintf(stderr,"id: %d, rank: %d, score: %d\n", id, rank, score);
       }
@@ -449,6 +474,13 @@ class SamurAI{
      */
     PLAYER *getPlayer(int id){
       return &g_playerList[id];
+    }
+
+    /*
+     * 指定したIDの居館を取得
+     */
+    KYOKAN *getKyokan(int id){
+      return &g_kyokanList[id];
     }
 
     /*
