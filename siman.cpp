@@ -291,7 +291,7 @@ class SamurAI{
 
           // フィールド内かつ、攻撃範囲に含まれている
           if(isInside(ny, nx) && (PLAYER_ATTACK_RANGE[my->job][y][x] >> direct) & 1){
-            g_field[nz] = playerId;
+            g_field[nz] = g_playerId;
           }
         }
       }
