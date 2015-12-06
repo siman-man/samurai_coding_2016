@@ -22,6 +22,9 @@ const int SPEAR = 0;
 const int SWORD = 1;
 const int AX = 2;
 
+const int DY[4] = {1, 0, -1, 0};
+const int DX[4] = {0, 1, 0, -1};
+
 unsigned long long xor128(){
   static unsigned long long rx=123456789, ry=362436069, rz=521288629, rw=88675123;
   unsigned long long rt = (rx ^ (rx<<11));
@@ -130,20 +133,20 @@ int action_pattern[ACTION_PATTERN_NUM][7] = {
 
   // 攻撃 + 1回行動
   {1, 5, 0, 0, 0, 0, 0},
-  {1, 5, 0, 0, 0, 0, 0},
-  {1, 5, 0, 0, 0, 0, 0},
-  {1, 5, 0, 0, 0, 0, 0},
+  {1, 6, 0, 0, 0, 0, 0},
+  {1, 7, 0, 0, 0, 0, 0},
+  {1, 8, 0, 0, 0, 0, 0},
+  {2, 5, 0, 0, 0, 0, 0},
   {2, 6, 0, 0, 0, 0, 0},
-  {2, 6, 0, 0, 0, 0, 0},
-  {2, 6, 0, 0, 0, 0, 0},
-  {2, 6, 0, 0, 0, 0, 0},
+  {2, 7, 0, 0, 0, 0, 0},
+  {2, 8, 0, 0, 0, 0, 0},
+  {3, 5, 0, 0, 0, 0, 0},
+  {3, 6, 0, 0, 0, 0, 0},
   {3, 7, 0, 0, 0, 0, 0},
-  {3, 7, 0, 0, 0, 0, 0},
-  {3, 7, 0, 0, 0, 0, 0},
-  {3, 7, 0, 0, 0, 0, 0},
-  {4, 8, 0, 0, 0, 0, 0},
-  {4, 8, 0, 0, 0, 0, 0},
-  {4, 8, 0, 0, 0, 0, 0},
+  {3, 8, 0, 0, 0, 0, 0},
+  {4, 5, 0, 0, 0, 0, 0},
+  {4, 6, 0, 0, 0, 0, 0},
+  {4, 7, 0, 0, 0, 0, 0},
   {4, 8, 0, 0, 0, 0, 0},
 };
 
@@ -334,9 +337,28 @@ class SamurAI{
     }
 
     /**
+     * 移動
+     */
+    bool move(int direct){
+      PLAYER *my = getPlayer(g_playerId);
+
+      int ny = my->y + DY[direct-5];
+      int nx = my->x + DX[direct-5];
+
+      if(isInside(ny,nx)){
+        my->y = ny;
+        my->x = nx;
+
+        return true;
+      }else{
+        return false;
+      }
+    }
+
+    /**
      * 攻撃
      */
-    void attack(int direct){
+    bool attack(int direct){
       PLAYER *my = getPlayer(g_playerId);
 
       for(int y = 0; y < 9; y++){
@@ -351,6 +373,8 @@ class SamurAI{
           }
         }
       }
+
+      return true;
     }
 
     /**
