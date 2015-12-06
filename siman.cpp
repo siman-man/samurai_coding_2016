@@ -440,6 +440,22 @@ class SamurAI{
       return (0 <= y && y < g_height && 0 <= x && x < g_width);
     }
 
+    /*
+     * 顕現出来るかどうかを返す
+     */
+    inline bool can_show_up(int y, int x){
+      for(int playerId = 0; playerId < MAX_PLAYER_NUM; playerId++){
+        if(playerId == g_playerId) continue;
+
+        PLAYER *player = getPlayer(playerId);
+        if(player->y == y && player->x == x){
+          return false;
+        }
+      }
+
+      return true;
+    }
+
     void showField(){
       for(int y = 0; y < g_height; y++){
         for(int x = 0; x < g_width; x++){
