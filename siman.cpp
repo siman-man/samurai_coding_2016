@@ -254,7 +254,7 @@ class SamurAI{
     }
 
     /*
-     * ダンダムに移動する
+     * ランダムに移動する
      */
     vector<int> randomMove(){
       vector<int> direct_list;
@@ -268,7 +268,7 @@ class SamurAI{
     }
 
     /*
-     * 命令を出力
+     * 命令リストを対戦サーバに通知
      */
     void output(vector<int> operation_list){
       int size = operation_list.size();
