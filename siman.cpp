@@ -18,37 +18,49 @@ using namespace std;
 typedef long long ll;
 
 const int UNKNOWN = -1;
+const int SPEAR = 0;
+const int SWORD = 1;
+const int AX = 2;
+
+unsigned long long xor128(){
+  static unsigned long long rx=123456789, ry=362436069, rz=521288629, rw=88675123;
+  unsigned long long rt = (rx ^ (rx<<11));
+  rx=ry; ry=rz; rz=rw;
+  return (rw=(rw^(rw>>19))^(rt^(rt>>8)));
+}
 
 struct PLAYER{
-	int id;				// サムライ番号
-	int y;				// 現在のy座標
-	int x;				// 現在のx座標
-	int homeY;		// 居館のy座標
-	int homeX; 		// 居館のx座標
-	int status; 	// 潜伏状態かどうか
+  int id;				// サムライ番号
+  int y;				// 現在のy座標
+  int x;				// 現在のx座標
+  int job;      // 職種
+  int homeY;		// 居館のy座標
+  int homeX; 		// 居館のx座標
+  int status; 	// 潜伏状態かどうか
 
-	PLAYER(int id = UNKNOWN){
-		this->id = id;
-		this->y = UNKNOWN;
-		this->x = UNKNOWN;
-		this->homeY = UNKNOWN;
-		this->homeX = UNKNOWN;
-	}
+  PLAYER(int id = UNKNOWN){
+    this->id = id;
+    this->y = UNKNOWN;
+    this->x = UNKNOWN;
+    this->job = id%3;
+    this->homeY = UNKNOWN;
+    this->homeX = UNKNOWN;
+  }
 
-	// 初期位置の設定
-	void setHomePosition(int y, int x){
-		this->y = y;
-		this->x = x;
-		this->homeY = y;
-		this->homeX = x;
-	}
+  // 初期位置の設定
+  void setHomePosition(int y, int x){
+    this->y = y;
+    this->x = x;
+    this->homeY = y;
+    this->homeX = x;
+  }
 
-	// プレイヤー情報の更新
-	void update(int y, int x, int status){
-		this->y = y;
-		this->x = x;
-		this->status = status;
-	}
+  // プレイヤー情報の更新
+  void update(int y, int x, int status){
+    this->y = y;
+    this->x = x;
+    this->status = status;
+  }
 };
 
 // 参加するプレイヤーの最大人数
@@ -77,111 +89,234 @@ int g_currentTurn;
 // 治療期間
 int g_curePeriod;
 // フィールド
-int g_field[MAX_HEIGHT][MAX_WIDTH];
+int g_field[MAX_HEIGHT*MAX_WIDTH];
+
+int PLAYER_ATTACK_RANGE[3][9][9] = {
+  /*
+   * 槍の攻撃範囲
+   */
+  {
+    {0, 0, 0, 0, 4, 0, 0, 0, 0},
+    {0, 0, 0, 0, 4, 0, 0, 0, 0},
+    {0, 0, 0, 0, 4, 0, 0, 0, 0},
+    {0, 0, 0, 0, 4, 0, 0, 0, 0},
+    {8, 8, 8, 8, 0, 2, 2, 2, 2},
+    {0, 0, 0, 0, 1, 0, 0, 0, 0},
+    {0, 0, 0, 0, 1, 0, 0, 0, 0},
+    {0, 0, 0, 0, 1, 0, 0, 0, 0},
+    {0, 0, 0, 0, 1, 0, 0, 0, 0}
+  },
+
+  /*
+   * 剣の攻撃範囲
+   */
+  {
+    {0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 6, 0, 0, 0, 0},
+    {0, 0, 0, 4, 6, 2, 0, 0, 0},
+    {0, 0,12,12, 0, 3, 3, 0, 0},
+    {0, 0, 0, 8, 9, 1, 0, 0, 0},
+    {0, 0, 0, 0, 9, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0}
+  },
+
+  /*
+   * マサカリの攻撃範囲
+   */
+  {
+    {0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0,15,14,15, 0, 0, 0},
+    {0, 0, 0,13, 0, 7, 0, 0, 0},
+    {0, 0, 0,15,11,15, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0}
+  }
+};
 
 class SamurAI{
-	public:
-		/**
-		 * 初期情報の読み込みを行う
-		 */
-		void init(){
-			scanf("%d %d %d %d %d", &g_max_turn, &g_playerId, &g_groupId, &g_width, &g_height);
-			fprintf(stderr,"ready =>\n");
+  public:
+    /**
+     * 初期情報の読み込みを行う
+     */
+    void init(){
+      scanf("%d %d %d %d %d", &g_max_turn, &g_playerId, &g_groupId, &g_width, &g_height);
+      fprintf(stderr,"ready =>\n");
 
-			fprintf(stderr,"max_turn => %d\n", g_max_turn);
-			fprintf(stderr,"player id => %d\n", g_playerId);
-			fprintf(stderr,"group id => %d\n", g_groupId);
-			fprintf(stderr,"width: %d, height: %d\n", g_width, g_height);
+      fprintf(stderr,"max_turn => %d\n", g_max_turn);
+      fprintf(stderr,"player id => %d\n", g_playerId);
+      fprintf(stderr,"group id => %d\n", g_groupId);
+      fprintf(stderr,"width: %d, height: %d\n", g_width, g_height);
 
-			// 居館の位置を取得（ついでにユーザの初期位置を設定）
-			for(int id = 0; id < MAX_PLAYER_NUM; id++){
-				int homeY;
-				int homeX;
+      // 居館の位置を取得（ついでにユーザの初期位置を設定）
+      for(int id = 0; id < MAX_PLAYER_NUM; id++){
+        int homeY;
+        int homeX;
 
-				PLAYER player(id);
-				scanf("%d %d", &homeY, &homeX);
+        PLAYER player(id);
+        scanf("%d %d", &homeY, &homeX);
 
-				// プレイヤーの初期位置を初期化
-				player.setHomePosition(homeY, homeX);
-			}
+        // プレイヤーの初期位置を初期化
+        player.setHomePosition(homeY, homeX);
+      }
 
-			// 各プレイヤーの戦績を取得
-			for(int id = 0; id < MAX_PLAYER_NUM; id++){
-				int rank;
-				int score;
+      // 各プレイヤーの戦績を取得
+      for(int id = 0; id < MAX_PLAYER_NUM; id++){
+        int rank;
+        int score;
 
-				PLAYER *player = getPlayer(id);
-				scanf("%d %d", &rank, &score);
+        PLAYER *player = getPlayer(id);
+        scanf("%d %d", &rank, &score);
 
-				fprintf(stderr,"id: %d, rank: %d, score: %d\n", id, rank, score);
-			}
+        fprintf(stderr,"id: %d, rank: %d, score: %d\n", id, rank, score);
+      }
 
-			// 準備完了の通知をサーバ側に足して行う
-			cout << 0 << endl;
-		}
+      // 準備完了の通知をサーバ側に足して行う
+      cout << 0 << endl;
+    }
 
-		/**
-		 * フィールド情報の更新を行う
-		 */
-		void updateFieldData(){
-			fprintf(stderr,"updateFieldData =>\n");
-			// 現在のターンの取得
-			scanf("%d", &g_currentTurn);
-			fprintf(stderr,"currentTurn => %d\n", g_currentTurn);
+    /**
+     * フィールド情報の更新を行う
+     */
+    bool updateFieldData(){
+      fprintf(stderr,"updateFieldData =>\n");
+      // 現在のターンの取得
+      int status = scanf("%d", &g_currentTurn);
 
-			// 治療期間の取得
-			scanf("%d", &g_curePeriod);
-			fprintf(stderr,"curePeriod => %d\n", g_curePeriod);
+      if(status == -1){
+        return false;
+      }
 
-			// 各プレイヤーの情報を更新
-			for(int id = 0; id < MAX_PLAYER_NUM; id++){
-				int y;
-				int x;
-				int status;
+      fprintf(stderr,"currentTurn => %d\n", g_currentTurn);
 
-				PLAYER *player = getPlayer(id);
-				scanf("%d %d %d", &y, &x, &status);
+      // 治療期間の取得
+      scanf("%d", &g_curePeriod);
+      fprintf(stderr,"curePeriod => %d\n", g_curePeriod);
 
-				fprintf(stderr,"id: %d, y: %d, x: %d, status: %d\n", id, y, x, status);
+      // 各プレイヤーの情報を更新
+      for(int id = 0; id < MAX_PLAYER_NUM; id++){
+        int y;
+        int x;
+        int status;
 
-				player->update(y, x, status);
-			}
-			
-			// フィールド情報の更新
-			for(int y = 0; y < g_height; y++){
-				for(int x = 0; x < g_width; x++){
-					int cell;
-					scanf("%d", &cell);
-					g_field[y][x] = cell;
-				}
-			}
-		}
+        PLAYER *player = getPlayer(id);
+        scanf("%d %d %d", &y, &x, &status);
 
-		/**
-		 * 行動
-		 */
-		void move(){
-			cout << "0 0 0 0 0 0 0" << endl;
-		}
+        fprintf(stderr,"id: %d, y: %d, x: %d, status: %d\n", id, y, x, status);
+
+        player->update(y, x, status);
+      }
+
+      // フィールド情報の更新
+      for(int y = 0; y < g_height; y++){
+        for(int x = 0; x < g_width; x++){
+          int z = getZ(y,x);
+          int cell;
+          scanf("%d", &cell);
+          g_field[z] = cell;
+        }
+      }
+
+      return true;
+    }
+
+    /**
+     * 行動
+     */
+    vector<int> move(){
+      vector<int> operation_list(7,0);
+      operation_list[1] = 1;
+      return operation_list;
+    }
 
     /**
      * AIの実行
      */
-		void run(){
-			while(true){
-				updateFieldData();
-				move();
-			}
-		}
+    void run(){
+      while(true){
+        if(updateFieldData()){
+          //vector<int> operation_list = randomMove();
+          vector<int> operation_list = move();
+          output(operation_list);
+        }else{
+          break;
+        }
+        showField();
+      }
+    }
 
-		PLAYER *getPlayer(int id){
-			return &g_playerList[id];
-		}
+    PLAYER *getPlayer(int id){
+      return &g_playerList[id];
+    }
+
+    /*
+     * ダンダムに移動する
+     */
+    vector<int> randomMove(){
+      vector<int> direct_list;
+
+      for(int i = 0; i < 3; i++){
+        int d = xor128()%4 + 5;
+        direct_list.push_back(d);
+      }
+
+      return direct_list;
+    }
+
+    /*
+     * 命令を出力
+     */
+    void output(vector<int> operation_list){
+      int size = operation_list.size();
+
+      /*
+       * 足りない部分は0で埋める
+       */
+      for(int i = 0; i < 7 - size; i++){
+        operation_list.push_back(0);
+      }
+
+      for(int i = 0; i < 7; i++){
+        cout << operation_list[i];
+
+        if(i != 6){
+          cout << " ";
+        }
+      }
+
+      cout << endl;
+    }
+
+    /*
+     * z座標の取得を行う
+     */
+    inline int getZ(int y, int x){
+      return y * MAX_WIDTH + x;
+    }
+
+    void showField(){
+      for(int y = 0; y < g_height; y++){
+        for(int x = 0; x < g_width; x++){
+          int z = getZ(y,x);
+
+          if(g_field[z] == g_playerId){
+            fprintf(stderr,"M");
+          }else{
+            fprintf(stderr,"%d", g_field[z]);
+          }
+        }
+        fprintf(stderr,"\n");
+      }
+    }
 };
 
 int main(){
-	SamurAI player;
-	player.init();
-	player.run();
+  SamurAI player;
+  player.init();
+  player.run();
   return 0;
 }

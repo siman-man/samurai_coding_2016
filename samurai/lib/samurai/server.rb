@@ -248,13 +248,17 @@ module SamurAI
     #
     def init_player_list
       @player_list = []
+      ignore_list = ['.', '..', '.gitkeep', 'siman']
+
+      members = (Dir.entries('./players') - ignore_list).sample(6)
+      members[0] = 'siman'
 
       kyokan_list.each do |kyokan|
         player_id = kyokan.id
         y = kyokan.y
         x = kyokan.x
 
-        create_player(id: player_id, name: "siman#{player_id+1}", y: y, x: x)
+        create_player(id: player_id, name: members.shift, y: y, x: x)
       end
     end
 
