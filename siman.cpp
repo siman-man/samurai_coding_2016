@@ -91,6 +91,14 @@ int g_curePeriod;
 // フィールド
 int g_field[MAX_HEIGHT*MAX_WIDTH];
 
+/*
+ * プレイヤーの行動パターン
+ */
+int action_pattern[1][7] = {
+  // 何もしない
+  {0, 0, 0, 0, 0, 0, 0}
+};
+
 // プレイヤーの攻撃範囲
 int PLAYER_ATTACK_RANGE[3][9][9] = {
   // 槍の攻撃範囲
@@ -226,8 +234,8 @@ class SamurAI{
     /**
      * フィールド情報の更新を行う
      */
-    bool updateFieldData(){
-      fprintf(stderr,"updateFieldData =>\n");
+    bool updateGameData(){
+      fprintf(stderr,"updateGameData =>\n");
       // 現在のターンの取得
       int status = scanf("%d", &g_currentTurn);
 
@@ -271,7 +279,7 @@ class SamurAI{
     /**
      * 行動
      */
-    vector<int> move(){
+    vector<int> action(){
       vector<int> operation_list(7,0);
       operation_list[1] = 1;
       return operation_list;
@@ -302,9 +310,9 @@ class SamurAI{
      */
     void run(){
       while(true){
-        if(updateFieldData()){
-          //vector<int> operation_list = randomMove();
-          vector<int> operation_list = move();
+        if(updateGameData()){
+          //vector<int> operation_list = random_move();
+          vector<int> operation_list = action();
           output(operation_list);
         }else{
           break;
@@ -323,7 +331,7 @@ class SamurAI{
     /*
      * ランダムに移動する
      */
-    vector<int> randomMove(){
+    vector<int> random_move(){
       vector<int> direct_list;
 
       for(int i = 0; i < 3; i++){
@@ -332,6 +340,18 @@ class SamurAI{
       }
 
       return direct_list;
+    }
+
+    /*
+     * フィールドの状態を評価する
+     */
+    int calc_field_eval(){
+      // チームで見れる視界の数
+      int can_view_count = 0;
+      // 自分の領土の数
+      int owner_count = 0;
+
+      return (can_view_count + owner_count);
     }
 
     /*
