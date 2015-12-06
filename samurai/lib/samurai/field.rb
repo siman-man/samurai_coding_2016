@@ -27,7 +27,7 @@ module SamurAI
       @field.map.with_index { |row, y|
         row.map.with_index { |cell, x|
           if cell.visible?(group_id)
-            cell.status
+            cell.owner
           else
             UNKNOWN
           end

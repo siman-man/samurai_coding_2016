@@ -1,6 +1,7 @@
 module SamurAI
   class Cell
     attr_reader :status, :owner, :attacked, :samurai_id
+    attr_accessor :visible
 
     NEUTRAL = 8
     UNKNOWN = 9
@@ -84,10 +85,14 @@ module SamurAI
 
     #
     # セル情報の初期化を行う
+    #   1. セルが攻撃されたかどうかを初期化
+    #   2. セルに存在しているサムライを初期化
+    #   3. 視界情報を初期化
     #
     def clear
       @attacked = false
       @samurai_id = nil
+      @visible = Array.new(2, false)
     end
   end
 end

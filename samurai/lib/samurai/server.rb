@@ -61,12 +61,14 @@ module SamurAI
       player_list.each do |player|
         player.load
 				player.input(first_input_params(id: player.id, group_id: player.group_id))
-				p player.response
+        player.response
       end
 
       # max_turnの数繰り返す
-      max_turn.times do
-        @current_player = player_order.next
+      max_turn.times do |turn|
+        @current_turn = turn
+        @current_player = player_list[player_order.next]
+        #puts "current turn: #{turn}, player: #{current_player.id}"
         player_action
       end
 
@@ -78,8 +80,9 @@ module SamurAI
     # プレイヤーが行う行動
     #
     def player_action
-      start_phase
+      sleep 0.1
       clear_phase
+      start_phase
       action_phase
       update_phase
     end
@@ -87,10 +90,12 @@ module SamurAI
     #
     # ターンの一番最初にあるフェーズです。
     #   1. 各プレイヤーの体力を1回復します
+    #   2. 各プレイヤーの視界情報を更新
     #
     def start_phase
       player_list.each do |player|
         player.cure
+        player.view(field: field)
       end
     end
 
@@ -106,14 +111,15 @@ module SamurAI
     # ユーザから受け取った命令リストを元にゲームの盤面を更新します
     #
     def action_phase
-			puts "action phase =>"
-      @current_player = player_list[player_order.next]
+			#puts "action phase =>"
 
       # プレイヤーに対して情報を送信
       current_player.input(input_params(current_player.id))
 
       # プレイヤーからの情報を受け取る
       output = current_player.response
+
+      #puts "player operation = #{output.inspect}"
 
       # 命令を解析
       operation_list = parse_operation(output)
@@ -127,7 +133,7 @@ module SamurAI
     #   1. 盤面を調べて、攻撃されたマスに他のプレイヤーがいた場合は居館に戻して治療期間を設定する
     #
     def update_phase
-			puts "update phase =>"
+			#puts "update phase =>"
 
       player_list.each do |player|
         next if current_player.id == player.id
@@ -180,14 +186,34 @@ module SamurAI
     #
     def show_result
       cell_owner_count = Hash.new(0)
+      group_point = Hash.new(0)
 
 			(0...height).each do |y|
         (0...width).each do |x|
-          cell_owner_count[field[y][x].owner] += 1
+          cell = field[y][x]
+
+          if cell.owner != 8
+            cell_owner_count[cell.owner] += 1
+            group_point[cell.owner_group] += 1
+          end
         end
       end
 
-      p cell_owner_count
+      puts "Team A: #{group_point[0]} point, Team B: #{group_point[1]} point"
+
+      if group_point[0] < group_point[1]
+        puts 'Team 1 Win'
+      elsif group_point[0] > group_point[1]
+        puts 'Team 0 Win'
+      else
+        puts 'Draw'
+      end
+
+      puts "Personal Result:"
+
+      MAX_PLAYER_NUM.times do |player_id|
+        puts "Player #{player_id}: #{cell_owner_count[player_id]} point"
+      end
     end
 
     #
@@ -261,7 +287,6 @@ module SamurAI
         params << samurai.ranking_data
       end
 
-      puts params.join("\n")
       params.join("\n")
     end
 
@@ -284,7 +309,7 @@ module SamurAI
       # フィールド情報
       params << field.info(player.group_id)
 
-      puts params.join("\n")
+      #STDERR.puts params.join("\n")
       params.join("\n")
     end
 

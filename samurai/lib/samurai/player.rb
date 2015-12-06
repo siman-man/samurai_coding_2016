@@ -238,6 +238,19 @@ module SamurAI
     end
 
     #
+    # 視界情報の更新
+    #
+    def view(field:)
+      (0...field.height).each do |y|
+        (0...field.width).each do |x|
+          if can_visible?(y: y, x: x)
+            field[y][x].visible[group_id] = true
+          end
+        end
+      end
+    end
+
+    #
     # 指定されたマスが見えるかどうか
     #
     def can_visible?(y:, x:)
