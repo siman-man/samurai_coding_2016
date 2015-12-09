@@ -2,3 +2,17 @@ task :default => :test
 task :test do
 	Dir.glob('./test/**/*_test.rb').each{|file|require file}
 end
+
+task :create do
+  system("ruby script/create_table.rb")
+end
+
+task :drop do
+  system("ruby script/drop_table.rb")
+end
+
+task :battle do
+  30.times do
+    system("ruby bin/samurai")
+  end
+end

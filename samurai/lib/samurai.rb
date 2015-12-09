@@ -1,3 +1,5 @@
+require 'sqlite3'
+
 require 'samurai/version'
 require 'samurai/kyokan'
 require 'samurai/cell'

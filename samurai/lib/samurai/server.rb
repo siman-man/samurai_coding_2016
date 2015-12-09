@@ -2,10 +2,42 @@ module SamurAI
 	class Server
 		attr_reader :max_turn, :width, :height, :field, :healing_time,
                 :kyokan_list, :player_list, :current_turn, :current_player,
-                :player_order
+                :player_order, :db, :nuri_point
 
     # 参加プレイヤーの最大人数
     MAX_PLAYER_NUM = 6
+
+    # ウデマエによるポイントの上昇率
+    UDEMAE_UP_RATE = {
+      'C-' => 7, 'C' => 6, 'C+' => 5,
+      'B-' => 5, 'B' => 4, 'B+' => 4,
+      'A-' => 4, 'A' => 4, 'A+' => 4,
+      'S-' => 3, 'S' => 2, 'S+' => 1
+    }.freeze
+
+    # ウデマエによるポイントの下降率
+    UDEMAE_DOWN_RATE ={
+      'C-' => 1, 'C' => 2, 'C+' => 3,
+      'B-' => 5, 'B' => 4, 'B+' => 4,
+      'A-' => 4, 'A' => 4, 'A+' => 4,
+      'S-' => 5, 'S' => 6, 'S+' => 7
+    }.freeze
+
+    # 次のランク
+    NEXT_UDEMAE = {
+      'C-' => 'C', 'C' => 'C+', 'C+' => 'B-',
+      'B-' => 'B', 'B' => 'B+', 'B+' => 'A-',
+      'A-' => 'A', 'A' => 'A+', 'A+' => 'S-',
+      'S-' => 'S', 'S' => 'S+', 'S+' => 'SS'
+    }.freeze
+
+    # 前のランク
+    PRED_UDEMAE = {
+      'C-' => 'C-', 'C' => 'C-', 'C+' => 'C',
+      'B-' => 'C+', 'B' => 'B-', 'B+' => 'B',
+      'A-' => 'B+', 'A' => 'A-', 'A+' => 'A',
+      'S-' => 'A+', 'S' => 'S-', 'S+' => 'S'
+    }.freeze
 
     # プレイヤーのID
     A0 = 0
@@ -54,26 +86,31 @@ module SamurAI
     # ゲームを開始
     #
     def run
-			# ゲーム情報を初期化
-			init_game
+      begin
+        open_db
+			  # ゲーム情報を初期化
+			  init_game
 
-      # プレイヤー情報を取得
-      player_list.each do |player|
-        player.load
-				player.input(first_input_params(id: player.id, group_id: player.group_id))
-        player.response
+        # プレイヤー情報を取得
+        player_list.each do |player|
+          player.load
+				  player.input(first_input_params(id: player.id, group_id: player.group_id))
+          player.response
+        end
+
+        # max_turnの数繰り返す
+        max_turn.times do |turn|
+          @current_turn = turn
+          @current_player = player_list[player_order.next]
+          #puts "current turn: #{turn}, player: #{current_player.id}"
+          player_action
+        end
+
+        # 結果を集計 & 表示
+        show_result
+      ensure
+        close_db
       end
-
-      # max_turnの数繰り返す
-      max_turn.times do |turn|
-        @current_turn = turn
-        @current_player = player_list[player_order.next]
-        #puts "current turn: #{turn}, player: #{current_player.id}"
-        player_action
-      end
-
-      # 結果を集計 & 表示
-      show_result
     end
 
     #
@@ -185,7 +222,6 @@ module SamurAI
     # 最終結果
     #
     def show_result
-      cell_owner_count = Hash.new(0)
       group_point = Hash.new(0)
 
 			(0...height).each do |y|
@@ -193,7 +229,7 @@ module SamurAI
           cell = field[y][x]
 
           if cell.owner != 8
-            cell_owner_count[cell.owner] += 1
+            player_list[cell.owner].point += 1
             group_point[cell.owner_group] += 1
           end
         end
@@ -203,8 +239,10 @@ module SamurAI
 
       if group_point[0] < group_point[1]
         puts 'Team 1 Win'
+        update_ranking(winner: 1)
       elsif group_point[0] > group_point[1]
         puts 'Team 0 Win'
+        update_ranking(winner: 0)
       else
         puts 'Draw'
       end
@@ -212,8 +250,110 @@ module SamurAI
       puts "Personal Result:"
 
       MAX_PLAYER_NUM.times do |player_id|
-        puts "Player #{player_id}: #{cell_owner_count[player_id]} point"
+        puts "Player #{player_id}: #{player_list[player_id].point} point"
       end
+
+      player_list.each do |player|
+        puts player.detail
+      end
+    end
+
+    #
+    # ランクの更新を行う
+    #
+    def update_ranking(winner:)
+      if winner == 0
+        [0,1,2].each do |id|
+          player = player_list[id]
+          rank_up(name: player.name, udemae: player.udemae)
+          update_total_nuri_point(name: player.name, total_nuri_point: player.total_nuri_point + player.point)
+          update_play_count(name: player.name, play_count: player.play_count + 1)
+        end
+
+        [3,4,5].each do |id|
+          player = player_list[id]
+          rank_down(name: player.name, udemae: player.udemae)
+          update_total_nuri_point(name: player.name, total_nuri_point: player.total_nuri_point + player.point)
+          update_play_count(name: player.name, play_count: player.play_count + 1)
+        end
+      else
+        [0,1,2].each do |id|
+          player = player_list[id]
+          rank_down(name: player.name, udemae: 'C30')
+          update_total_nuri_point(name: player.name, total_nuri_point: player.total_nuri_point + player.point)
+          update_play_count(name: player.name, play_count: player.play_count + 1)
+        end
+
+        [3,4,5].each do |id|
+          player = player_list[id]
+          rank_up(name: player.name, udemae: player.udemae)
+          update_total_nuri_point(name: player.name, total_nuri_point: player.total_nuri_point + player.point)
+          update_play_count(name: player.name, play_count: player.play_count + 1)
+        end
+      end
+    end
+
+    def update_total_nuri_point(name:, total_nuri_point:)
+      db.execute("UPDATE ranking_table SET total_nuri_point = '#{total_nuri_point}' where name = '#{name}'")
+    end
+
+    def update_play_count(name:, play_count:)
+      db.execute("UPDATE ranking_table SET play_count = '#{play_count}' where name = '#{name}'")
+    end
+
+    #
+    # ランクが上がる
+    #
+    def rank_up(name:, udemae:)
+      /(?<rank>[A-Z\-\+]+)(?<point>[0-9]+)/ =~ udemae
+      new_point = (point.to_i + UDEMAE_UP_RATE[rank])
+
+      if new_point > 99
+        new_udemae = NEXT_UDEMAE[rank] + '30'
+      else
+        new_udemae = rank + new_point.to_s
+      end
+
+      puts "rank up! #{new_udemae}"
+      db.execute("UPDATE ranking_table SET udemae = '#{new_udemae}' where name = '#{name}'")
+    end
+
+    #
+    # ランクが下る
+    #
+    def rank_down(name:, udemae:)
+      /(?<rank>[A-Z\-\+]+)(?<point>[0-9]+)/ =~ udemae
+      new_point = point.to_i - UDEMAE_DOWN_RATE[rank]
+
+      if new_point < 0
+        new_udemae = PRED_UDEMAE[rank] + '70'
+      else
+        new_udemae = rank + new_point.to_s
+      end
+
+      puts "rank down... #{new_udemae}"
+      db.execute("UPDATE ranking_table SET udemae = '#{new_udemae}' where name = '#{name}'")
+    end
+
+    #
+    # データベースの初期化
+    #
+    def open_db
+      @db = SQLite3::Database.new('./db/ranking.db')
+    end
+
+    #
+    # データベースのクローズ
+    #
+    def close_db
+      db.close
+    end
+
+    #
+    # プレイヤーの登録
+    #
+    def regist_player(name:)
+      db.execute("INSERT INTO ranking_table values('#{name}', 'C30', 0, 0)")
     end
 
     #
@@ -266,7 +406,22 @@ module SamurAI
     # プレイヤーの作成
     #
     def create_player(id:, name:, y:, x:)
-      @player_list[id] = SamurAI::Player.new(id: id, name: name, y: y, x: x)
+      player = SamurAI::Player.new(id: id, name: name, y: y, x: x)
+      count = db.get_first_value("select count(*) from ranking_table where name = '#{name}'")
+
+      # まだ登録がされていない場合は登録を行う
+      regist_player(name: name) if count.zero?
+
+      db.execute("select * from ranking_table where name = '#{name}'") do |row|
+        name, udemae, total_nuri_point, play_count = *row
+
+        player.udemae = udemae
+        player.total_nuri_point = total_nuri_point
+        player.play_count = play_count
+        puts "name: #{name}, udemae: #{udemae}, total_nuri_point: #{total_nuri_point}, play_count: #{play_count}"
+      end
+
+      @player_list[id] = player
     end
 
     # 試合を始める

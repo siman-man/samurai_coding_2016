@@ -1,7 +1,7 @@
 module SamurAI
   class Player
-    attr_reader :ranking, :point, :status, :y, :x, :id, :group_id, :name
-    attr_accessor :cure_period
+    attr_reader :ranking, :status, :y, :x, :id, :group_id, :name
+    attr_accessor :cure_period, :udemae, :total_nuri_point, :play_count, :point
 
     #
     # 槍の攻撃範囲
@@ -122,6 +122,13 @@ module SamurAI
     #
     def info
       [y, x, status].join(' ')
+    end
+
+    #
+    #
+    #
+    def detail
+      "name: #{name}, udemae: #{udemae}, total_nuri_point: #{total_nuri_point}, play_count: #{play_count}"
     end
 
     #

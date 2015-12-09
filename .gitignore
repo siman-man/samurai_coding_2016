@@ -5,5 +5,6 @@ test.rb
 .DS_Store
 SamurAImanager-1124/
 samurai/.idea/
+samurai/db/*.db
 samurai/.rbenv-gemsets
 samurai/players
