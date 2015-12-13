@@ -8,3 +8,4 @@ samurai/.idea/
 samurai/db/*.db
 samurai/.rbenv-gemsets
 samurai/players
+samurai/template/*.html
