@@ -376,7 +376,7 @@ class SamurAI{
       scanf("%d", &g_cure_period);
 
       if(g_cure_period > 0){
-        //fprintf(stderr,"%d: I'm sleepy now...\n", g_cure_period);
+        fprintf(stderr,"%d: I'm sleepy now...\n", g_cure_period);
       }
 
       // 各プレイヤーの情報を更新
@@ -433,6 +433,13 @@ class SamurAI{
         if(!is_valid_operation(operation_list)){
           continue;
         }
+
+        /*
+        for(int k = 0; k < 7; k++){
+          fprintf(stderr,"%d ", operation_list[k]);
+        }
+        fprintf(stderr,"\n");
+        */
 
         exec_operation(operation_list);
 
@@ -566,7 +573,11 @@ class SamurAI{
         }else{
           break;
         }
-        //show_field();
+        /*
+        fprintf(stderr,"---------------------------\n");
+        show_field();
+        fprintf(stderr,"---------------------------\n");
+        */
       }
     }
 
@@ -618,7 +629,7 @@ class SamurAI{
 
       //fprintf(stderr,"(%d, %d) owner_count = %d\n", my->y, my->x, owner_count);
 
-      fprintf(stderr,"kill_count = %d, friend_area_count = %d, owner_count = %d, enemy_area_count = %d\n", g_kill_count, friend_area_count, owner_count, enemy_area_count);
+      //fprintf(stderr,"kill_count = %d, friend_area_count = %d, owner_count = %d, enemy_area_count = %d\n", g_kill_count, friend_area_count, owner_count, enemy_area_count);
 
       return 10 * g_kill_count + (friend_area_count + 2 * owner_count) - enemy_area_count;
     }

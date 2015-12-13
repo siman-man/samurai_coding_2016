@@ -62,7 +62,7 @@ module SamurAI
     def init_game
       # データベースを開く
       open_db
-      @max_turn = 120
+      @max_turn = 60
       #@max_turn = 12 * [*1..84].sample
       @width = [*10..20].sample
       @height = [*10..20].sample
@@ -106,9 +106,8 @@ module SamurAI
           #puts "current turn: #{turn}, player: #{current_player.id}"
           player_action
 
-          sleep 0.1
-          field.show
-          puts
+          #sleep 0.1
+          #field.show
         end
 
         # 結果を集計 & 表示
@@ -161,7 +160,7 @@ module SamurAI
       # プレイヤーからの情報を受け取る
       output = current_player.response
 
-      puts "id: #{(65+current_player.id).chr} player #{current_player.name} = #{output.inspect}"
+      #puts "id: #{(65+current_player.id).chr} player #{current_player.name} = #{output.inspect}"
 
       # 命令を解析
       operation_list = parse_operation(output)
@@ -199,6 +198,7 @@ module SamurAI
 
       # 治療期間が終わっていない場合は全ての命令を無視
       if player.cure_period > 0
+        #puts "Ignore operation..."
         return
       end
 
@@ -399,9 +399,11 @@ module SamurAI
     #
     def init_player_list
       @player_list = []
+      #ignore_list = ['.', '..', '.gitkeep', 'ultra_greedy_man']
       ignore_list = ['.', '..', '.gitkeep']
 
       members = (Dir.entries('./players') - ignore_list).sample(6)
+      #members[0] = 'ultra_greedy_man'
 
       kyokan_list.each do |kyokan|
         player_id = kyokan.id
