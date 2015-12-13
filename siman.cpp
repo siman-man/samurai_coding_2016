@@ -71,19 +71,20 @@ struct NODE {
 };
 
 struct PLAYER{
-  int id;				// サムライ番号
-  int group_id; // グループID
-  int y;				// 現在のy座標
-  int x;				// 現在のx座標
-  int beforeY;  // 前のターンのy座標
-  int beforeX;  // 前のターンのx座標
-  int job;      // 職種
-  int homeY;		// 居館のy座標
-  int homeX; 		// 居館のx座標
-  int status; 	// 潜伏状態かどうか
+  int id;				    // サムライ番号
+  int group_id;     // グループID
+  int y;				    // 現在のy座標
+  int x;				    // 現在のx座標
+  int beforeY;      // 前のターンのy座標
+  int beforeX;      // 前のターンのx座標
+  int job;          // 職種
+  int homeY;		    // 居館のy座標
+  int homeX; 		    // 居館のx座標
+  int status; 	    // 潜伏状態かどうか
   int beforeStatus; // 前回の状態
-  int rank;     // 現在のランキング
-  int score;    // 現在のスコア
+  int rank;         // 現在のランキング
+  int score;        // 現在のスコア
+  int update_at;    // 更新ターン
 
   PLAYER(int id = UNKNOWN){
     this->id = id;
@@ -141,7 +142,7 @@ int g_width;
 // フィールドの縦幅
 int g_height;
 // 現在のターン
-int g_currentTurn;
+int g_current_turn;
 // 治療期間
 int g_cure_period;
 // フィールド
@@ -150,6 +151,10 @@ vector< vector<int> > g_field(MAX_HEIGHT, vector<int>(MAX_WIDTH, 0));
 // 一時保存用
 //int g_temp_field[MAX_HEIGHT*MAX_WIDTH];
 vector< vector<int> > g_temp_field(MAX_HEIGHT, vector<int>(MAX_WIDTH, 0));
+
+// そのフィールドの危険度を表す
+vector< vector<int> > g_danger_field(MAX_HEIGHT, vector<int>(MAX_WIDTH, 0));
+
 // 倒した数
 int g_kill_count = 0;
 
@@ -250,7 +255,6 @@ int PLAYER_ATTACK_RANGE[3][9][9] = {
     {0, 0, 0, 0, 0, 0, 0, 0, 0}
   }
 };
-
 
 // プレイヤーの倒せる範囲
 int PLAYER_KILL_RANGE[3][11][11] = {
@@ -364,19 +368,21 @@ class SamurAI{
     bool updateGameData(){
       //fprintf(stderr,"updateGameData =>\n");
       // 現在のターンの取得
-      int status = scanf("%d", &g_currentTurn);
+      int status = scanf("%d", &g_current_turn);
+
+      vector< vector<int> > g_danger_field(MAX_HEIGHT, vector<int>(MAX_WIDTH, 0));
 
       if(status == -1){
         return false;
       }
 
-      //fprintf(stderr,"currentTurn => %d\n", g_currentTurn);
+      //fprintf(stderr,"currentTurn => %d\n", g_current_turn);
 
       // 治療期間の取得
       scanf("%d", &g_cure_period);
 
       if(g_cure_period > 0){
-        fprintf(stderr,"%d: I'm sleepy now...\n", g_cure_period);
+        //fprintf(stderr,"%d: I'm sleepy now...\n", g_cure_period);
       }
 
       // 各プレイヤーの情報を更新
@@ -390,6 +396,7 @@ class SamurAI{
 
         if(status != UNKNOWN){
           player->update(y, x, status);
+          player->update_at = g_current_turn;
         }
 
         //fprintf(stderr,"id: %d, y: %d, x: %d, status: %d\n", id, player->y, player->x, player->status);
@@ -485,6 +492,46 @@ class SamurAI{
       }
 
       return true;
+    }
+
+    /**
+     * フィールドの危険値を更新
+     */
+    void update_field_eval(){
+      if(g_groupId == 0){
+        for(int player_id = 3; player_id < 6; player_id += 1){
+          PLAYER *enemy = getPlayer(player_id);
+
+          if(enemy->update_at == g_current_turn){
+            set_danger_value(enemy->job, enemy->y, enemy->x);
+          }
+        }
+      }else{
+        for(int player_id = 0; player_id < 2; player_id += 1){
+          PLAYER *enemy = getPlayer(player_id);
+
+          if(enemy->update_at == g_current_turn){
+            set_danger_value(enemy->job, enemy->y, enemy->x);
+          }
+        }
+      }
+    }
+
+    /*
+     * 危険値をセットする
+     */
+    void set_danger_value(int job, int dy, int dx){
+      for(int y = 0; y < 11; y++){
+        for(int x = 0; x < 11; x++){
+          int ny = dy + (y-5);
+          int nx = dx + (x-5);
+
+          // フィールド内でかつ、相手の倒される範囲に居た場合
+          if(is_inside(ny, nx) && PLAYER_KILL_RANGE[job][y][x]){
+            g_danger_field[ny][nx] += 1;
+          }
+        }
+      }
     }
 
     /**
@@ -631,7 +678,7 @@ class SamurAI{
 
       //fprintf(stderr,"kill_count = %d, friend_area_count = %d, owner_count = %d, enemy_area_count = %d\n", g_kill_count, friend_area_count, owner_count, enemy_area_count);
 
-      return 10 * g_kill_count + (friend_area_count + 2 * owner_count) - enemy_area_count;
+      return -10 * g_danger_field[my->y][my->x] + 10 * g_kill_count + (friend_area_count + 2 * owner_count) - enemy_area_count;
     }
 
     /*
