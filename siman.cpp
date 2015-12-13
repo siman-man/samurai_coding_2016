@@ -21,6 +21,8 @@ typedef long long ll;
 const int NOHIDE = 0;
 const int HIDE = 1;
 const int UNKNOWN = -1;
+const int NEUTRAL = 8;
+const int NOTHING = 9;
 const int SPEAR = 0;
 const int SWORD = 1;
 const int AX = 2;
@@ -304,15 +306,13 @@ class SamurAI{
      * 初期情報の読み込みを行う
      */
     void init(){
-      scanf("%d %d %d %d %d", &g_max_turn, &g_playerId, &g_groupId, &g_width, &g_height);
-      /*
+      scanf("%d %d %d %d %d", &g_max_turn, &g_groupId, &g_playerId, &g_width, &g_height);
       fprintf(stderr,"ready =>\n");
 
       fprintf(stderr,"max_turn => %d\n", g_max_turn);
       fprintf(stderr,"player id => %d\n", g_playerId);
       fprintf(stderr,"group id => %d\n", g_groupId);
       fprintf(stderr,"width: %d, height: %d\n", g_width, g_height);
-      */
       vector< vector<int> > g_field(g_height, vector<int>(g_width, 0));
       vector< vector<int> > g_temp_field(g_height, vector<int>(g_width, 0));
 
@@ -388,7 +388,9 @@ class SamurAI{
         PLAYER *player = getPlayer(id);
         scanf("%d %d %d", &x, &y, &status);
 
-        player->update(y, x, status);
+        if(status != UNKNOWN){
+          player->update(y, x, status);
+        }
 
         //fprintf(stderr,"id: %d, y: %d, x: %d, status: %d\n", id, player->y, player->x, player->status);
         //fprintf(stderr,"input id: %d, y: %d, x: %d, status: %d\n", id, y, x, status);
@@ -455,6 +457,7 @@ class SamurAI{
      */
     bool exec_operation(vector<int> operation_list){
       int size = operation_list.size();
+      g_kill_count = 0;
 
       for(int i = 0; i < size; i++){
         int operation = operation_list[i];
@@ -501,7 +504,6 @@ class SamurAI{
      */
     bool attack(int direct){
       PLAYER *my = getPlayer(g_playerId);
-      g_kill_count = 0;
 
       for(int y = 0; y < 9; y++){
         for(int x = 0; x < 9; x++){
@@ -509,8 +511,8 @@ class SamurAI{
           int nx = my->x + (x-4);
           int nz = getZ(ny,nx);
 
-          // フィールド内かつ、攻撃範囲に含まれている
-          if(is_inside(ny, nx) && ((PLAYER_ATTACK_RANGE[my->job][y][x] >> direct) & 1)){
+          // フィールド内かつ、居館ではなく、攻撃範囲に含まれている
+          if(is_inside(ny, nx) && !is_exist_kyokan(ny, nx) && ((PLAYER_ATTACK_RANGE[my->job][y][x] >> direct) & 1)){
             //fprintf(stderr,"(%d, %d) checked\n", ny, nx);
             //g_field[nz] = g_playerId;
             g_field[ny][nx] = g_playerId;
@@ -583,20 +585,6 @@ class SamurAI{
     }
 
     /*
-     * ランダムに移動する
-     */
-    vector<int> random_move(){
-      vector<int> direct_list;
-
-      for(int i = 0; i < 3; i++){
-        int d = xor128()%4 + 5;
-        direct_list.push_back(d);
-      }
-
-      return direct_list;
-    }
-
-    /*
      * フィールドの状態を評価する
      */
     int calc_field_eval(){
@@ -608,6 +596,8 @@ class SamurAI{
       int owner_count = 0;
       // 相手チームの領土の数
       int enemy_area_count = 0;
+      // 自分のチームの領土の数
+      int friend_area_count = 0;
 
       for(int y = 0; y < g_height; y++){
         for(int x = 0; x < g_width; x++){
@@ -620,13 +610,17 @@ class SamurAI{
 
           if(group_id != UNKNOWN && group_id != g_groupId){
             enemy_area_count += 1;
+          }else if(group_id != UNKNOWN && group_id == g_groupId){
+            friend_area_count += 1;
           }
         }
       }
 
       //fprintf(stderr,"(%d, %d) owner_count = %d\n", my->y, my->x, owner_count);
 
-      return owner_count - enemy_area_count;
+      fprintf(stderr,"kill_count = %d, friend_area_count = %d, owner_count = %d, enemy_area_count = %d\n", g_kill_count, friend_area_count, owner_count, enemy_area_count);
+
+      return 10 * g_kill_count + (friend_area_count + 2 * owner_count) - enemy_area_count;
     }
 
     /*
@@ -683,6 +677,21 @@ class SamurAI{
         if(player->group_id == g_groupId) continue;
 
         if(player->y == y && player->x == x){
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    /*
+     * そのマスに居館があるかどうかを調べる
+     */
+    bool is_exist_kyokan(int y, int x){
+      for(int kyokan_id = 0; kyokan_id < MAX_PLAYER_NUM; kyokan_id++){
+        KYOKAN *kyokan = getKyokan(kyokan_id);
+
+        if(kyokan->y == y && kyokan->x == x){
           return true;
         }
       }

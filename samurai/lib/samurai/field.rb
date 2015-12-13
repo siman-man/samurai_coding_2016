@@ -54,6 +54,22 @@ module SamurAI
     end
 
     #
+    # フィールドを表示する
+    #
+    def show
+      @field.each do |row|
+        row.each do |cell|
+          if cell.exist_samurai?
+            print (65+cell.samurai_id).chr
+          else
+            print cell.owner
+          end
+        end
+        puts
+      end
+    end
+
+    #
     # フィールド情報のクリアを行う
     # フィールドの各Cellに対してclearメソッドを呼び出す
     #

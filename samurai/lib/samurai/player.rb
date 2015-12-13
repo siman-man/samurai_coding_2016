@@ -120,8 +120,12 @@ module SamurAI
     #
     # 現在の自分の情報を渡す
     #
-    def info
-      [x, y, status].join(' ')
+    def info(field:, group_id:)
+      if field[y][x].visible?(group_id)
+        [x, y, status].join(' ')
+      else
+        [-1, -1, -1].join(' ')
+      end
     end
 
     #

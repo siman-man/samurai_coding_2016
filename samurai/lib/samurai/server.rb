@@ -105,6 +105,10 @@ module SamurAI
           @current_player = player_list[player_order.next]
           #puts "current turn: #{turn}, player: #{current_player.id}"
           player_action
+
+          sleep 0.1
+          field.show
+          puts
         end
 
         # 結果を集計 & 表示
@@ -133,6 +137,7 @@ module SamurAI
       player_list.each do |player|
         player.cure
         player.view(field: field)
+        field[player.y][player.x].set_samurai(id: player.id)
       end
     end
 
@@ -156,7 +161,7 @@ module SamurAI
       # プレイヤーからの情報を受け取る
       output = current_player.response
 
-      #puts "player #{current_player.name} = #{output.inspect}"
+      puts "id: #{(65+current_player.id).chr} player #{current_player.name} = #{output.inspect}"
 
       # 命令を解析
       operation_list = parse_operation(output)
@@ -394,10 +399,9 @@ module SamurAI
     #
     def init_player_list
       @player_list = []
-      ignore_list = ['.', '..', '.gitkeep', 'ultra_greedy_man']
+      ignore_list = ['.', '..', '.gitkeep']
 
       members = (Dir.entries('./players') - ignore_list).sample(6)
-      members[0] = 'ultra_greedy_man'
 
       kyokan_list.each do |kyokan|
         player_id = kyokan.id
@@ -468,7 +472,7 @@ module SamurAI
 
       # 各プレイヤーの情報
       player_list.each do |samurai|
-        params << samurai.info
+        params << samurai.info(field: field, group_id: player.group_id)
       end
 
       # フィールド情報
