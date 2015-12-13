@@ -11,8 +11,17 @@ task :drop do
   system("ruby script/drop_table.rb")
 end
 
+task :rank do
+  system("ruby template/ranking.rb")
+end
+
+task :clean do
+  system("ruby script/drop_table.rb")
+  system("ruby script/create_table.rb")
+end
+
 task :battle do
-  30.times do
+  1.times do
     system("ruby bin/samurai")
   end
 end

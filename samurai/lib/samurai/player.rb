@@ -55,11 +55,11 @@ module SamurAI
 
     #
     # プレイヤーの状態を示す
-    # 0: 潜伏状態
-    # 1: 潜伏していない状態
+    # 0: 潜伏していない状態
+    # 1: 潜伏状態
     #
-    HIDE = 0
-    NOHIDE = 1
+    NOHIDE = 0
+    HIDE = 1
 
     #
     # 視界の範囲
@@ -121,7 +121,7 @@ module SamurAI
     # 現在の自分の情報を渡す
     #
     def info
-      [y, x, status].join(' ')
+      [x, y, status].join(' ')
     end
 
     #

@@ -16,10 +16,10 @@ module SamurAI
     }.freeze
 
     # ウデマエによるポイントの下降率
-    UDEMAE_DOWN_RATE ={
-      'C-' => 1, 'C' => 2, 'C+' => 3,
-      'B-' => 5, 'B' => 4, 'B+' => 4,
-      'A-' => 4, 'A' => 4, 'A+' => 4,
+    UDEMAE_DOWN_RATE = {
+      'C-' => 1, 'C' => 2, 'C+' => 2,
+      'B-' => 2, 'B' => 2, 'B+' => 2,
+      'A-' => 2, 'A' => 2, 'A+' => 2,
       'S-' => 5, 'S' => 6, 'S+' => 7
     }.freeze
 
@@ -60,7 +60,9 @@ module SamurAI
     #   6. フィールドの状態を初期化
     #
     def init_game
-      @max_turn = 12
+      # データベースを開く
+      open_db
+      @max_turn = 120
       #@max_turn = 12 * [*1..84].sample
       @width = [*10..20].sample
       @height = [*10..20].sample
@@ -87,7 +89,6 @@ module SamurAI
     #
     def run
       begin
-        open_db
 			  # ゲーム情報を初期化
 			  init_game
 
@@ -117,7 +118,6 @@ module SamurAI
     # プレイヤーが行う行動
     #
     def player_action
-      sleep 0.1
       clear_phase
       start_phase
       action_phase
@@ -156,7 +156,7 @@ module SamurAI
       # プレイヤーからの情報を受け取る
       output = current_player.response
 
-      #puts "player operation = #{output.inspect}"
+      #puts "player #{current_player.name} = #{output.inspect}"
 
       # 命令を解析
       operation_list = parse_operation(output)
@@ -177,8 +177,7 @@ module SamurAI
 
         cell = field[player.y][player.x]
 
-        if cell.exist_samurai? && cell.atacked
-          player = player_list[cell.samurai_id]
+        if cell.attacked
           player.go_back_home
           player.cure_period = healing_time
         end
@@ -192,6 +191,11 @@ module SamurAI
     #
     def exec_operation(player:, operation_list:)
       cost = 0
+
+      # 治療期間が終わっていない場合は全ての命令を無視
+      if player.cure_period > 0
+        return
+      end
 
       operation_list.each do |operation|
         case operation
@@ -249,12 +253,14 @@ module SamurAI
 
       puts "Personal Result:"
 
-      MAX_PLAYER_NUM.times do |player_id|
-        puts "Player #{player_id}: #{player_list[player_id].point} point"
+      player_list.each do |player|
+        puts "Player #{player.name}: #{player.point} point"
       end
 
       player_list.each do |player|
-        puts player.detail
+        db.execute("select * from ranking_table where name = '#{player.name}'") do |row|
+          puts "name: #{row[0]}, udemae: #{row[1]}, nuri_point: #{row[2]}, play_count: #{row[3]}"
+        end
       end
     end
 
@@ -277,16 +283,16 @@ module SamurAI
           update_play_count(name: player.name, play_count: player.play_count + 1)
         end
       else
-        [0,1,2].each do |id|
+        [3,4,5].each do |id|
           player = player_list[id]
-          rank_down(name: player.name, udemae: 'C30')
+          rank_up(name: player.name, udemae: player.udemae)
           update_total_nuri_point(name: player.name, total_nuri_point: player.total_nuri_point + player.point)
           update_play_count(name: player.name, play_count: player.play_count + 1)
         end
 
-        [3,4,5].each do |id|
+        [0,1,2].each do |id|
           player = player_list[id]
-          rank_up(name: player.name, udemae: player.udemae)
+          rank_down(name: player.name, udemae: player.udemae)
           update_total_nuri_point(name: player.name, total_nuri_point: player.total_nuri_point + player.point)
           update_play_count(name: player.name, play_count: player.play_count + 1)
         end
@@ -314,7 +320,7 @@ module SamurAI
         new_udemae = rank + new_point.to_s
       end
 
-      puts "rank up! #{new_udemae}"
+      puts "#{name} rank up! #{udemae} -> #{new_udemae}"
       db.execute("UPDATE ranking_table SET udemae = '#{new_udemae}' where name = '#{name}'")
     end
 
@@ -323,7 +329,7 @@ module SamurAI
     #
     def rank_down(name:, udemae:)
       /(?<rank>[A-Z\-\+]+)(?<point>[0-9]+)/ =~ udemae
-      new_point = point.to_i - UDEMAE_DOWN_RATE[rank]
+      new_point = (point.to_i - UDEMAE_DOWN_RATE[rank])
 
       if new_point < 0
         new_udemae = PRED_UDEMAE[rank] + '70'
@@ -331,7 +337,7 @@ module SamurAI
         new_udemae = rank + new_point.to_s
       end
 
-      puts "rank down... #{new_udemae}"
+      puts "#{name} rank down... #{udemae} -> #{new_udemae}"
       db.execute("UPDATE ranking_table SET udemae = '#{new_udemae}' where name = '#{name}'")
     end
 
@@ -346,7 +352,7 @@ module SamurAI
     # データベースのクローズ
     #
     def close_db
-      db.close
+      db && db.close
     end
 
     #
@@ -388,10 +394,10 @@ module SamurAI
     #
     def init_player_list
       @player_list = []
-      ignore_list = ['.', '..', '.gitkeep', 'siman']
+      ignore_list = ['.', '..', '.gitkeep', 'ultra_greedy_man']
 
       members = (Dir.entries('./players') - ignore_list).sample(6)
-      members[0] = 'siman'
+      members[0] = 'ultra_greedy_man'
 
       kyokan_list.each do |kyokan|
         player_id = kyokan.id
@@ -418,7 +424,7 @@ module SamurAI
         player.udemae = udemae
         player.total_nuri_point = total_nuri_point
         player.play_count = play_count
-        puts "name: #{name}, udemae: #{udemae}, total_nuri_point: #{total_nuri_point}, play_count: #{play_count}"
+        #puts "name: #{name}, udemae: #{udemae}, total_nuri_point: #{total_nuri_point}, play_count: #{play_count}"
       end
 
       @player_list[id] = player
