@@ -39,6 +39,18 @@ unsigned long long xor128(){
   return (rw=(rw^(rw>>19))^(rt^(rt>>8)));
 }
 
+struct COORD {
+  int y;
+  int x;
+  int dist;
+
+  COORD(int y = UNKNOWN, int x = UNKNOWN, int dist = 0){
+    this->y = y;
+    this->x = x;
+    this->dist = dist;
+  }
+};
+
 struct KYOKAN{
   int id;       // 居館番号
   int y;        // y座標
@@ -65,7 +77,7 @@ struct EVAL {
 
 struct NODE {
   vector<int> operation_list;
-  int eval;
+  double eval;
 
   bool operator >(const NODE &e) const{
     return eval < e.eval;
@@ -148,15 +160,18 @@ int g_current_turn;
 // 治療期間
 int g_cure_period;
 // フィールド
-//int g_field[MAX_HEIGHT*MAX_WIDTH];
-vector< vector<int> > g_field(MAX_HEIGHT, vector<int>(MAX_WIDTH, 0));
+vector< vector<int> > g_field;
 // 一時保存用
-//int g_temp_field[MAX_HEIGHT*MAX_WIDTH];
-vector< vector<int> > g_temp_field(MAX_HEIGHT, vector<int>(MAX_WIDTH, 0));
+vector< vector<int> > g_temp_field;
+// 前のターンのフィールド情報
+vector< vector<int> > g_before_field;
 
 // そのフィールドの危険度を表す
-vector< vector<int> > g_danger_field(MAX_HEIGHT, vector<int>(MAX_WIDTH, 0));
-vector< vector<int> > g_temp_danger_field(MAX_HEIGHT, vector<int>(MAX_WIDTH, 0));
+vector< vector<int> > g_danger_field;
+vector< vector<int> > g_temp_danger_field;
+
+// 敵から見られているかどうかを表す
+vector< vector<bool> > g_visibled_field;
 
 // 倒した数
 int g_kill_count = 0;
@@ -325,8 +340,8 @@ class SamurAI{
       fprintf(stderr,"group id => %d\n", g_group_id);
       fprintf(stderr,"width: %d, height: %d\n", g_width, g_height);
       */
-      vector< vector<int> > g_field(g_height, vector<int>(g_width, 0));
-      vector< vector<int> > g_temp_field(g_height, vector<int>(g_width, 0));
+      g_field = vector< vector<int> >(g_height, vector<int>(g_width, 0));
+      g_temp_field = vector< vector<int> >(g_height, vector<int>(g_width, 0));
 
       // 居館の位置を取得（ついでにユーザの初期位置を設定）
       for(int player_id = 0; player_id < MAX_PLAYER_NUM; player_id++){
@@ -377,7 +392,8 @@ class SamurAI{
       // 現在のターンの取得
       int status = scanf("%d", &g_current_turn);
 
-      vector< vector<int> > g_danger_field(MAX_HEIGHT, vector<int>(MAX_WIDTH, 0));
+      g_danger_field = vector< vector<int> >(g_height, vector<int>(g_width, 0));
+      g_visibled_field = vector< vector<bool> >(g_height, vector<bool>(g_width, false));
 
       if(status == -1){
         return false;
@@ -413,6 +429,8 @@ class SamurAI{
         //fprintf(stderr,"id: %d, y: %d, x: %d, beforeY = %d, beforeX = %d, status: %d\n", id, player->y, player->x, player->beforeY, player->beforeX, player->status);
       }
 
+      // 前のフィールド情報を保存する
+      g_before_field = g_field;
 
       // フィールド情報の更新
       for(int y = 0; y < g_height; y++){
@@ -424,6 +442,8 @@ class SamurAI{
       }
 
       update_field_value();
+      // 敵の視野をセットする
+      set_enemy_sight();
 
       return true;
     }
@@ -515,21 +535,14 @@ class SamurAI{
      * フィールドの評価値を更新
      */
     void update_field_value(){
-      if(g_group_id == 0){
-        for(int player_id = 3; player_id < 6; player_id += 1){
-          PLAYER *enemy = get_player(player_id);
+      // 危険値の更新
+      for(int player_id = 0; player_id < 6; player_id += 1){
+        PLAYER *player = get_player(player_id);
+        // 味方の場合は処理を飛ばす
+        if(player->group_id == g_group_id) continue;
 
-          if(enemy->update_at == g_current_turn){
-            set_danger_value(enemy->job, enemy->y, enemy->x);
-          }
-        }
-      }else{
-        for(int player_id = 0; player_id < 3; player_id += 1){
-          PLAYER *enemy = get_player(player_id);
-
-          if(enemy->update_at == g_current_turn){
-            set_danger_value(enemy->job, enemy->y, enemy->x);
-          }
+        if(player->update_at == g_current_turn){
+          set_danger_value(player->job, player->y, player->x);
         }
       }
     }
@@ -550,6 +563,7 @@ class SamurAI{
           if(is_inside(ny, nx) && PLAYER_KILL_RANGE[job][dy][dx]){
             g_danger_field[ny][nx] += 1;
             assert(g_danger_field[ny][nx] > 0);
+            assert(g_danger_field[ny][nx] <= 3);
           }
         }
       }
@@ -571,7 +585,8 @@ class SamurAI{
           if(is_inside(ny, nx) && PLAYER_KILL_RANGE[job][dy][dx]){
             g_danger_field[ny][nx] -= 1;
 
-            assert(g_danger_field[ny][nx] >= 0);
+            assert(0 <= g_danger_field[ny][nx]);
+            assert(g_danger_field[ny][nx] <= 2);
           }
         }
       }
@@ -619,8 +634,10 @@ class SamurAI{
               g_kill_count += 1;
 
               assert(g_kill_count <= 3);
+              assert(killed_id < MAX_PLAYER_NUM);
 
               PLAYER *enemy = get_player(killed_id);
+              assert(enemy->group_id != g_group_id);
               remove_danger_value(enemy->job, enemy->y, enemy->x);
             }
           }
@@ -719,11 +736,11 @@ class SamurAI{
      * フィールドの状態を評価する
      * @return 評価値
      */
-    int calc_field_eval(){
+    double calc_field_eval(){
       PLAYER *my = get_player(g_playerId);
 
       // チームで見れる視界の数
-      int can_view_count = 0;
+      int can_view_count = get_visible_cell_count();
       // 自分の領土の数
       int owner_count = 0;
       // 相手チームの領土の数
@@ -751,12 +768,21 @@ class SamurAI{
 
       //fprintf(stderr,"kill_count = %d, friend_area_count = %d, owner_count = %d, enemy_area_count = %d\n", g_kill_count, friend_area_count, owner_count, enemy_area_count);
 
+      int value = 0;
+
+      // 敵に見られている場合はポイントを下げる
+      if(g_visibled_field[my->y][my->x] && my->status == NOHIDE){
+        value -= 5;
+      }
+
       if(my->job == SPEAR){
-        return -30 * g_danger_field[my->y][my->x] + 15 * g_kill_count + (friend_area_count + 2 * owner_count) - enemy_area_count;
+        return -30 * g_danger_field[my->y][my->x] + 15 * g_kill_count + (friend_area_count + 2 * owner_count) - enemy_area_count + 0.5 * can_view_count;
+      // 職業が剣の場合の評価値
       }else if(my->job == SWORD){
-        return -30 * g_danger_field[my->y][my->x] + 15 * g_kill_count + (friend_area_count + 2 * owner_count) - enemy_area_count;
+        return -30 * g_danger_field[my->y][my->x] + 15 * g_kill_count + (friend_area_count + 2 * owner_count) - enemy_area_count + 0.5 * can_view_count + value;
+      // 職業がマサカリの時の評価値
       }else if(my->job == AX){
-        return -30 * g_danger_field[my->y][my->x] + 15 * g_kill_count + (friend_area_count + 2 * owner_count) - enemy_area_count;
+        return -20 * g_danger_field[my->y][my->x] + 20 * g_kill_count + (friend_area_count + 2 * owner_count) - enemy_area_count + 0.5 * can_view_count + value;
       }else{
         assert(false);
       }
@@ -823,9 +849,10 @@ class SamurAI{
     int is_exist_enemy(int y, int x){
       for(int player_id = 0; player_id < MAX_PLAYER_NUM; player_id++){
         PLAYER *player = get_player(player_id);
+        // 味方の場合は処理を飛ばす
         if(player->group_id == g_group_id) continue;
 
-        if(player->y == y && player->x == x){
+        if(player->y == y && player->x == x && player->update_at == g_current_turn){
           return player->id;
         }
       }
@@ -979,6 +1006,91 @@ class SamurAI{
       }else{
         return value/3;
       }
+    }
+
+    /**
+     * 敵に見られている範囲を表す
+     */
+    void set_enemy_sight(){
+      for(int player_id = 0; player_id < MAX_PLAYER_NUM; player_id++){
+        PLAYER *player = get_player(player_id);
+        // 味方の場合は処理を飛ばす
+        if(player->group_id != g_group_id) continue;
+        // 最新の情報でなければ処理を飛ばす
+        if(player->update_at != g_current_turn) continue;
+
+        queue<COORD> que;
+        map<int, bool> check_list;
+        que.push(COORD(player->y, player->x, 0));
+
+        while(!que.empty()){
+          COORD coord = que.front(); que.pop();
+          int z = getZ(coord.y, coord.x);
+
+          if(check_list[z] || coord.dist > 5) continue;
+          check_list[z] = true;
+
+          g_visibled_field[coord.y][coord.x] = true;
+
+          for(int i = 0; i < 4; i++){
+            int ny = coord.y + DY[i];
+            int nx = coord.x + DX[i];
+
+            if(is_inside(ny, nx)){
+              que.push(COORD(ny, nx, coord.dist+1));
+            }
+          }
+        }
+      }
+    }
+
+    /**
+     * 見ることが出来るセルの数を数える
+     */
+    int get_visible_cell_count(){
+      int visible_count = 0;
+      map<int, bool> all_check_list;
+
+      for(int player_id = 0; player_id < MAX_PLAYER_NUM; player_id += 1){
+        PLAYER *player = get_player(player_id);
+        if(player->group_id != g_group_id) continue;
+
+
+        queue<COORD> que;
+        map<int, bool> check_list;
+        que.push(COORD(player->y, player->x, 0));
+
+        while(!que.empty()){
+          COORD coord = que.front(); que.pop();
+          int z = getZ(coord.y, coord.x);
+
+          if(check_list[z] || coord.dist > 5) continue;
+          check_list[z] = true;
+
+          if(!all_check_list[z]){
+            all_check_list[z] = true;
+            visible_count += 1;
+          }
+
+          for(int i = 0; i < 4; i++){
+            int ny = coord.y + DY[i];
+            int nx = coord.x + DX[i];
+
+            if(is_inside(ny, nx)){
+              que.push(COORD(ny, nx, coord.dist+1));
+            }
+          }
+        }
+      }
+
+      return visible_count;
+    }
+
+    /**
+     * 座標間の距離を計算
+     */
+    inline int calc_dist(int y1, int x1, int y2, int x2){
+      return abs(y1-y2) + abs(x1-x2);
     }
 
     /**

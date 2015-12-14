@@ -1,5 +1,5 @@
 @filename = "siman"
-@ainame = 'not_die_man'
+@ainame = 'kill_man'
 
 task :default do
   `g++ -W -Wall -Wno-sign-compare -O2 -o #{@ainame} #{@filename}.cpp`

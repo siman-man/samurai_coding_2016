@@ -79,6 +79,7 @@ module SamurAI
     # 指定したIDで占領する
     #
     def occupy(id:)
+      return false if exist_kyokan?
       @attacked = true
       update_owner(id: id)
     end

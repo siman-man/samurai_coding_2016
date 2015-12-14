@@ -62,8 +62,8 @@ module SamurAI
     def init_game
       # データベースを開く
       open_db
-      @max_turn = 60
-      #@max_turn = 12 * [*1..84].sample
+      #@max_turn = 60
+      @max_turn = 12 * [*1..84].sample
       @width = [*10..20].sample
       @height = [*10..20].sample
       @healing_time = [*12..48].sample

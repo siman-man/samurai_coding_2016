@@ -22,4 +22,17 @@ class TestSamuraiCell < Minitest::Test
 
     assert_equal 1, cell.owner
   end
+
+  def test_occupy
+    cell1 = server.field[1][1]
+    cell2 = server.field[2][2]
+    cell1.build_kyokan(id: 2)
+
+    cell1.occupy(id: 1)
+    assert_equal false, cell1.attacked
+
+    cell2.occupy(id: 1)
+    assert_equal true, cell2.attacked
+    assert_equal 1, cell2.owner
+  end
 end
