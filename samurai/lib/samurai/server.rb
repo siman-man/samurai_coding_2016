@@ -107,8 +107,8 @@ module SamurAI
           player_action
 
           #sleep 0.1
-          field.show
-          puts "-----------------------"
+          #field.show
+          #puts "-----------------------"
         end
 
         # 結果を集計 & 表示
@@ -277,42 +277,17 @@ module SamurAI
     # ランクの更新を行う
     #
     def update_ranking(winner:)
-      if winner == 0
-        [0,1,2].each do |id|
-          player = player_list[id]
+      player_list.each do |player|
+        if player.group_id == winner
           rank_up(name: player.name, udemae: player.udemae)
-          update_total_nuri_point(name: player.name, total_nuri_point: player.total_nuri_point + player.point)
-          update_play_count(name: player.name, play_count: player.play_count + 1)
-          update_kill_count(name: player.name, total_kill_count: player.total_kill_count + player.kill_count)
-          update_die_count(name: player.name, total_die_count: player.total_die_count + player.die_count)
+        else
+          rank_down(name: player.name, udemae: player.udemae)
         end
 
-        [3,4,5].each do |id|
-          player = player_list[id]
-          rank_down(name: player.name, udemae: player.udemae)
-          update_total_nuri_point(name: player.name, total_nuri_point: player.total_nuri_point + player.point)
-          update_play_count(name: player.name, play_count: player.play_count + 1)
-          update_kill_count(name: player.name, total_kill_count: player.total_kill_count + player.kill_count)
-          update_die_count(name: player.name, total_die_count: player.total_die_count + player.die_count)
-        end
-      else
-        [3,4,5].each do |id|
-          player = player_list[id]
-          rank_up(name: player.name, udemae: player.udemae)
-          update_total_nuri_point(name: player.name, total_nuri_point: player.total_nuri_point + player.point)
-          update_play_count(name: player.name, play_count: player.play_count + 1)
-          update_kill_count(name: player.name, total_kill_count: player.total_kill_count + player.kill_count)
-          update_die_count(name: player.name, total_die_count: player.total_die_count + player.die_count)
-        end
-
-        [0,1,2].each do |id|
-          player = player_list[id]
-          rank_down(name: player.name, udemae: player.udemae)
-          update_total_nuri_point(name: player.name, total_nuri_point: player.total_nuri_point + player.point)
-          update_play_count(name: player.name, play_count: player.play_count + 1)
-          update_kill_count(name: player.name, total_kill_count: player.total_kill_count + player.kill_count)
-          update_die_count(name: player.name, total_die_count: player.total_die_count + player.die_count)
-        end
+        update_total_nuri_point(name: player.name, total_nuri_point: player.total_nuri_point + player.point)
+        update_play_count(name: player.name, play_count: player.play_count + 1)
+        update_kill_count(name: player.name, total_kill_count: player.total_kill_count + player.kill_count)
+        update_die_count(name: player.name, total_die_count: player.total_die_count + player.die_count)
       end
     end
 

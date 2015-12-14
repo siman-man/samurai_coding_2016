@@ -406,4 +406,13 @@ class TestSamuraiPlayer < Minitest::Test
 
     assert_equal 1, field[11][8].owner
   end
+
+  def test_player_info
+    reset_field
+    player = SamurAI::Player.new(id: 0, name: 'siman', y: 10, x: 8)
+
+    field[10][8].visible[0] = true
+    assert_equal "8 10 0", player.info(field: field, group_id: 0)
+    assert_equal "-1 -1 -1", player.info(field: field, group_id: 1)
+  end
 end

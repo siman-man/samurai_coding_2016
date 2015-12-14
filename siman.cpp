@@ -30,6 +30,8 @@ const int AX = 2;
 const int DY[4] = {1, 0, -1, 0};
 const int DX[4] = {0, 1, 0, -1};
 
+const int MAX_COST = 7;
+
 unsigned long long xor128(){
   static unsigned long long rx=123456789, ry=362436069, rz=521288629, rw=88675123;
   unsigned long long rt = (rx ^ (rx<<11));
@@ -315,12 +317,14 @@ class SamurAI{
      */
     void init(){
       scanf("%d %d %d %d %d", &g_max_turn, &g_group_id, &g_playerId, &g_width, &g_height);
+      /*
       fprintf(stderr,"ready =>\n");
 
       fprintf(stderr,"max_turn => %d\n", g_max_turn);
       fprintf(stderr,"player id => %d\n", g_playerId);
       fprintf(stderr,"group id => %d\n", g_group_id);
       fprintf(stderr,"width: %d, height: %d\n", g_width, g_height);
+      */
       vector< vector<int> > g_field(g_height, vector<int>(g_width, 0));
       vector< vector<int> > g_temp_field(g_height, vector<int>(g_width, 0));
 
@@ -403,23 +407,23 @@ class SamurAI{
           player->update_at = g_current_turn;
         }
 
-        update_field_value();
-
         //fprintf(stderr,"id: %d, y: %d, x: %d, status: %d\n", id, player->y, player->x, player->status);
         //fprintf(stderr,"input id: %d, y: %d, x: %d, status: %d\n", id, y, x, status);
 
         //fprintf(stderr,"id: %d, y: %d, x: %d, beforeY = %d, beforeX = %d, status: %d\n", id, player->y, player->x, player->beforeY, player->beforeX, player->status);
       }
 
+
       // フィールド情報の更新
       for(int y = 0; y < g_height; y++){
         for(int x = 0; x < g_width; x++){
           int cell;
           scanf("%d", &cell);
-          //g_field[z] = cell;
           g_field[y][x] = cell;
         }
       }
+
+      update_field_value();
 
       return true;
     }
@@ -435,7 +439,6 @@ class SamurAI{
       // 盤面を保存
       save_field();
 
-      //for(int i = 0; i < 10; i++){
       for(int i = 0; i < ACTION_PATTERN_NUM; i++){
         NODE node;
 
@@ -455,6 +458,7 @@ class SamurAI{
         */
 
         exec_operation(operation_list);
+        //check_field();
 
         node.operation_list = operation_list;
         node.eval = calc_field_eval();
@@ -477,6 +481,7 @@ class SamurAI{
      */
     bool exec_operation(vector<int> operation_list){
       int size = operation_list.size();
+      int cost = 0;
       g_kill_count = 0;
 
       for(int i = 0; i < size; i++){
@@ -487,15 +492,21 @@ class SamurAI{
         }else if(operation <= 4){
           assert(operation >= 1);
           attack(operation - 1);
+          cost += 4;
         }else if(operation <= 8){
           assert(operation >= 5);
           move(operation - 5);
+          cost += 2;
         }else if(operation == 9){
           hide();
+          cost += 1;
         }else{
           show_up();
+          cost += 1;
         }
       }
+
+      assert(cost <= MAX_COST);
 
       return true;
     }
@@ -513,7 +524,7 @@ class SamurAI{
           }
         }
       }else{
-        for(int player_id = 0; player_id < 2; player_id += 1){
+        for(int player_id = 0; player_id < 3; player_id += 1){
           PLAYER *enemy = get_player(player_id);
 
           if(enemy->update_at == g_current_turn){
@@ -559,7 +570,8 @@ class SamurAI{
           // フィールド内でかつ、相手の攻撃範囲に含まれていた場合は危険とみなす
           if(is_inside(ny, nx) && PLAYER_KILL_RANGE[job][dy][dx]){
             g_danger_field[ny][nx] -= 1;
-            assert(g_danger_field[ny][nx] < 0);
+
+            assert(g_danger_field[ny][nx] >= 0);
           }
         }
       }
@@ -570,6 +582,7 @@ class SamurAI{
      * @param direct 移動する方向
      */
     bool move(int direct){
+      assert(direct >= 0);
       PLAYER *my = get_player(g_playerId);
 
       int ny = my->y + DY[direct];
@@ -600,15 +613,39 @@ class SamurAI{
           // フィールド内かつ、居館ではなく、攻撃範囲に含まれている
           if(is_inside(ny, nx) && !is_exist_kyokan(ny, nx) && ((PLAYER_ATTACK_RANGE[my->job][y][x] >> direct) & 1)){
             g_field[ny][nx] = g_playerId;
+            int killed_id = is_exist_enemy(ny, nx);
 
-            if(is_exist_enemy(ny, nx)){
+            if(killed_id != UNKNOWN){
               g_kill_count += 1;
+
+              assert(g_kill_count <= 3);
+
+              PLAYER *enemy = get_player(killed_id);
+              remove_danger_value(enemy->job, enemy->y, enemy->x);
             }
           }
         }
       }
 
       return true;
+    }
+
+    /*
+     * フィールドの状態を確認する
+     * 1. 攻撃済みのフィールドに敵がいるかどうか
+     */
+    void check_field(){
+      // 1. 状態が判明している敵で倒したかどうか
+      for(int player_id = 0; player_id < MAX_PLAYER_NUM; player_id++){
+        PLAYER *player = get_player(player_id);
+
+        // 味方の場合は処理を飛ばす
+        if(player->group_id == g_group_id) continue;
+
+        // 情報が最新である
+        if(player->update_at == g_current_turn){
+        }
+      }
     }
 
     /**
@@ -714,7 +751,15 @@ class SamurAI{
 
       //fprintf(stderr,"kill_count = %d, friend_area_count = %d, owner_count = %d, enemy_area_count = %d\n", g_kill_count, friend_area_count, owner_count, enemy_area_count);
 
-      return -5 * g_danger_field[my->y][my->x] + 10 * g_kill_count + (friend_area_count + 2 * owner_count) - 2 * enemy_area_count;
+      if(my->job == SPEAR){
+        return -30 * g_danger_field[my->y][my->x] + 15 * g_kill_count + (friend_area_count + 2 * owner_count) - enemy_area_count;
+      }else if(my->job == SWORD){
+        return -30 * g_danger_field[my->y][my->x] + 15 * g_kill_count + (friend_area_count + 2 * owner_count) - enemy_area_count;
+      }else if(my->job == AX){
+        return -30 * g_danger_field[my->y][my->x] + 15 * g_kill_count + (friend_area_count + 2 * owner_count) - enemy_area_count;
+      }else{
+        assert(false);
+      }
     }
 
     /**
@@ -773,19 +818,19 @@ class SamurAI{
      * そのマスに敵がいるかどうかを調べる
      * @param y 調べたいy座標
      * @param x 調べたいx座標
-     * @return 敵がいるかどうかを返す
+     * @return (UNKNOWN: 敵は居ない, その他: 敵のID)
      */
-    bool is_exist_enemy(int y, int x){
+    int is_exist_enemy(int y, int x){
       for(int player_id = 0; player_id < MAX_PLAYER_NUM; player_id++){
         PLAYER *player = get_player(player_id);
         if(player->group_id == g_group_id) continue;
 
         if(player->y == y && player->x == x){
-          return true;
+          return player->id;
         }
       }
 
-      return false;
+      return UNKNOWN;
     }
 
     /**
@@ -896,7 +941,7 @@ class SamurAI{
      */
     void save_field(){
       g_temp_field = g_field;
-      g_danger_field = g_danger_field;
+      g_temp_danger_field = g_danger_field;
     }
 
     /**
