@@ -257,7 +257,9 @@ int PLAYER_ATTACK_RANGE[3][9][9] = {
   }
 };
 
-// プレイヤーの倒せる範囲
+/*
+ * 各武器の攻撃範囲
+ */
 int PLAYER_KILL_RANGE[3][11][11] = {
   // 槍が倒せる範囲
   {
@@ -326,8 +328,8 @@ class SamurAI{
         int homeY;
         int homeX;
 
-        KYOKAN *kyokan = getKyokan(player_id);
-        PLAYER *player = getPlayer(player_id);
+        KYOKAN *kyokan = get_kyokan(player_id);
+        PLAYER *player = get_player(player_id);
         scanf("%d %d", &homeX, &homeY);
 
         kyokan->id = player_id;
@@ -347,7 +349,7 @@ class SamurAI{
         int rank;
         int score;
 
-        PLAYER *player = getPlayer(id);
+        PLAYER *player = get_player(id);
         scanf("%d %d", &rank, &score);
 
         player->job = player->id%3;
@@ -366,8 +368,7 @@ class SamurAI{
     /**
      * フィールド情報の更新を行う
      */
-    bool updateGameData(){
-      //fprintf(stderr,"updateGameData =>\n");
+    bool update_game_data(){
       // 現在のターンの取得
       int status = scanf("%d", &g_current_turn);
 
@@ -392,13 +393,16 @@ class SamurAI{
         int x;
         int status;
 
-        PLAYER *player = getPlayer(id);
+        PLAYER *player = get_player(id);
         scanf("%d %d %d", &x, &y, &status);
 
+        // プレイヤーの情報が取得出来た場合
         if(status != UNKNOWN){
           player->update(y, x, status);
           player->update_at = g_current_turn;
         }
+
+        update_field_value();
 
         //fprintf(stderr,"id: %d, y: %d, x: %d, status: %d\n", id, player->y, player->x, player->status);
         //fprintf(stderr,"input id: %d, y: %d, x: %d, status: %d\n", id, y, x, status);
@@ -496,12 +500,12 @@ class SamurAI{
     }
 
     /**
-     * フィールドの危険値を更新
+     * フィールドの評価値を更新
      */
     void update_field_value(){
       if(g_groupId == 0){
         for(int player_id = 3; player_id < 6; player_id += 1){
-          PLAYER *enemy = getPlayer(player_id);
+          PLAYER *enemy = get_player(player_id);
 
           if(enemy->update_at == g_current_turn){
             set_danger_value(enemy->job, enemy->y, enemy->x);
@@ -509,7 +513,7 @@ class SamurAI{
         }
       }else{
         for(int player_id = 0; player_id < 2; player_id += 1){
-          PLAYER *enemy = getPlayer(player_id);
+          PLAYER *enemy = get_player(player_id);
 
           if(enemy->update_at == g_current_turn){
             set_danger_value(enemy->job, enemy->y, enemy->x);
@@ -518,28 +522,32 @@ class SamurAI{
       }
     }
 
-    /*
+    /**
      * 危険値をセットする
+     * @param job 職業
+     * @param y 基準となるy座標
+     * @param x 基準となるx座標
      */
-    void set_danger_value(int job, int dy, int dx){
-      for(int y = 0; y < 11; y++){
-        for(int x = 0; x < 11; x++){
-          int ny = dy + (y-5);
-          int nx = dx + (x-5);
+    void set_danger_value(int job, int y, int x){
+      for(int dy = 0; dy < 11; dy++){
+        for(int dx = 0; dx < 11; dx++){
+          int ny = y + (dy-5);
+          int nx = x + (dx-5);
 
-          // フィールド内でかつ、相手の倒される範囲に居た場合
-          if(is_inside(ny, nx) && PLAYER_KILL_RANGE[job][y][x]){
-            g_danger_field[ny][nx] += 1;
+          // フィールド内でかつ、相手の攻撃範囲に含まれていた場合は危険とみなす
+          if(is_inside(ny, nx) && PLAYER_KILL_RANGE[job][dy][dx]){
+            g_danger_field[ny][nx] = 1;
           }
         }
       }
     }
 
     /**
-     * 移動
+     * 移動を行う
+     * @param direct 移動する方向
      */
     bool move(int direct){
-      PLAYER *my = getPlayer(g_playerId);
+      PLAYER *my = get_player(g_playerId);
 
       int ny = my->y + DY[direct];
       int nx = my->x + DX[direct];
@@ -555,10 +563,11 @@ class SamurAI{
     }
 
     /**
-     * 攻撃
+     * 攻撃を行う
+     * @param direct 攻撃の方向
      */
     bool attack(int direct){
-      PLAYER *my = getPlayer(g_playerId);
+      PLAYER *my = get_player(g_playerId);
 
       for(int y = 0; y < 9; y++){
         for(int x = 0; x < 9; x++){
@@ -567,8 +576,6 @@ class SamurAI{
 
           // フィールド内かつ、居館ではなく、攻撃範囲に含まれている
           if(is_inside(ny, nx) && !is_exist_kyokan(ny, nx) && ((PLAYER_ATTACK_RANGE[my->job][y][x] >> direct) & 1)){
-            //fprintf(stderr,"(%d, %d) checked\n", ny, nx);
-            //g_field[nz] = g_playerId;
             g_field[ny][nx] = g_playerId;
 
             if(is_exist_enemy(ny, nx)){
@@ -582,10 +589,11 @@ class SamurAI{
     }
 
     /**
-     * 潜伏
+     * 潜伏を行う
+     * @return (true: 潜伏成功, false: 潜伏失敗)
      */
     bool hide(){
-      PLAYER *my = getPlayer(g_playerId);
+      PLAYER *my = get_player(g_playerId);
 
       if(can_hide(my->y, my->x)){
         my->status = HIDE;
@@ -596,10 +604,11 @@ class SamurAI{
     }
 
     /**
-     * 顕現
+     * 顕現を行う
+     * @return (true: 顕現成功, false: 顕現失敗)
      */
     bool show_up(){
-      PLAYER *my = getPlayer(g_playerId);
+      PLAYER *my = get_player(g_playerId);
       
       if(can_show_up(my->y, my->x)){
         my->status = NOHIDE;
@@ -614,7 +623,7 @@ class SamurAI{
      */
     void run(){
       while(true){
-        if(updateGameData()){
+        if(update_game_data()){
           vector<int> operation_list = action();
           output(operation_list);
         }else{
@@ -628,25 +637,30 @@ class SamurAI{
       }
     }
 
-    /*
+    /**
      * 指定したIDのプレイヤー情報を取得する
+     * @param player_id 取得したいプレイヤーのID
+     * @return プレイヤーの情報
      */
-    PLAYER *getPlayer(int id){
-      return &g_playerList[id];
+    inline PLAYER *get_player(int player_id){
+      return &g_playerList[player_id];
     }
 
-    /*
+    /**
      * 指定したIDの居館を取得
+     * @param kyokan_id 取得したい居館のID
+     * @return 居館の情報
      */
-    KYOKAN *getKyokan(int id){
-      return &g_kyokanList[id];
+    inline KYOKAN *get_kyokan(int kyokan_id){
+      return &g_kyokanList[kyokan_id];
     }
 
-    /*
+    /**
      * フィールドの状態を評価する
+     * @return 評価値
      */
     int calc_field_eval(){
-      PLAYER *my = getPlayer(g_playerId);
+      PLAYER *my = get_player(g_playerId);
 
       // チームで見れる視界の数
       int can_view_count = 0;
@@ -663,12 +677,12 @@ class SamurAI{
 
           if(g_field[y][x] == g_playerId){
             owner_count += 1;
-          }
-
-          if(group_id != UNKNOWN && group_id != g_groupId){
-            enemy_area_count += 1;
-          }else if(group_id != UNKNOWN && group_id == g_groupId){
-            friend_area_count += 1;
+          }else if(group_id != UNKNOWN){
+            if(group_id != g_groupId){
+              enemy_area_count += 1;
+            }else{
+              friend_area_count += 1;
+            }
           }
         }
       }
@@ -677,16 +691,17 @@ class SamurAI{
 
       //fprintf(stderr,"kill_count = %d, friend_area_count = %d, owner_count = %d, enemy_area_count = %d\n", g_kill_count, friend_area_count, owner_count, enemy_area_count);
 
-      return -10 * g_danger_field[my->y][my->x] + 10 * g_kill_count + (friend_area_count + 2 * owner_count) - enemy_area_count;
+      return -10 * g_danger_field[my->y][my->x] + 20 * g_kill_count + (friend_area_count + 2 * owner_count) - enemy_area_count;
     }
 
-    /*
-     * 命令リストを対戦サーバに通知
+    /**
+     * 命令リストを対戦サーバに送信
+     * @param operation_list 命令リスト
      */
     void output(vector<int> operation_list){
       int size = operation_list.size();
 
-      /*
+      /**
        * 足りない部分は0で埋める
        */
       for(int i = 0; i < OPERATION_LENGTH - size; i++){
@@ -739,7 +754,7 @@ class SamurAI{
      */
     bool is_exist_enemy(int y, int x){
       for(int player_id = 0; player_id < MAX_PLAYER_NUM; player_id++){
-        PLAYER *player = getPlayer(player_id);
+        PLAYER *player = get_player(player_id);
         if(player->group_id == g_groupId) continue;
 
         if(player->y == y && player->x == x){
@@ -758,7 +773,7 @@ class SamurAI{
      */
     bool is_exist_kyokan(int y, int x){
       for(int kyokan_id = 0; kyokan_id < MAX_PLAYER_NUM; kyokan_id++){
-        KYOKAN *kyokan = getKyokan(kyokan_id);
+        KYOKAN *kyokan = get_kyokan(kyokan_id);
 
         if(kyokan->y == y && kyokan->x == x){
           return true;
@@ -814,7 +829,7 @@ class SamurAI{
       for(int playerId = 0; playerId < MAX_PLAYER_NUM; playerId++){
         if(playerId == g_playerId) continue;
 
-        PLAYER *player = getPlayer(playerId);
+        PLAYER *player = get_player(playerId);
         if(player->y == y && player->x == x){
           return false;
         }
@@ -831,7 +846,7 @@ class SamurAI{
      */
     bool is_valid_operation(vector<int> operation_list){
       bool valid = true;
-      PLAYER *my = getPlayer(g_playerId);
+      PLAYER *my = get_player(g_playerId);
 
       for(int i = 0; i < OPERATION_LENGTH; i++){
         int operation = operation_list[i];
@@ -873,7 +888,7 @@ class SamurAI{
      *   2. 状態を戻す
      */
     void rollback_player(){
-      PLAYER *my = getPlayer(g_playerId);
+      PLAYER *my = get_player(g_playerId);
 
       my->y = my->beforeY;
       my->x = my->beforeX;

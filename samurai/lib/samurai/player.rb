@@ -1,7 +1,8 @@
 module SamurAI
   class Player
     attr_reader :ranking, :status, :y, :x, :id, :group_id, :name
-    attr_accessor :cure_period, :udemae, :total_nuri_point, :play_count, :point
+    attr_accessor :cure_period, :udemae, :total_nuri_point, :play_count, :point,
+                  :total_kill_count, :total_die_count, :kill_count, :die_count
 
     #
     # 槍の攻撃範囲
@@ -90,6 +91,8 @@ module SamurAI
       @id = id
       @name = name
       @point = 0
+      @kill_count = 0
+      @die_count = 0
 			@ranking = id
       @status = NOHIDE
       @group_id = id / 3 # [0,1,2], [3,4,5] でグループ分け

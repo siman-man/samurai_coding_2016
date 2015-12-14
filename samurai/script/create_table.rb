@@ -7,7 +7,9 @@ CREATE TABLE ranking_table (
   name text,
   udemae text,
   total_nuri_point integer,
-  play_count integer
+  play_count integer,
+  total_kill_count integer,
+  total_die_count integer
 );
 SQL
 

@@ -184,6 +184,9 @@ module SamurAI
         if cell.attacked
           player.go_back_home
           player.cure_period = healing_time
+
+          player.die_count += 1
+          current_player.kill_count += 1
         end
       end
     end
@@ -264,7 +267,7 @@ module SamurAI
 
       player_list.each do |player|
         db.execute("select * from ranking_table where name = '#{player.name}'") do |row|
-          puts "name: #{row[0]}, udemae: #{row[1]}, nuri_point: #{row[2]}, play_count: #{row[3]}"
+          puts "name: #{row[0]}, udemae: #{row[1]}, nuri_point: #{row[2]}, play_count: #{row[3]}, kill_count: #{row[4]}, die_count: #{row[5]}"
         end
       end
     end
@@ -279,6 +282,8 @@ module SamurAI
           rank_up(name: player.name, udemae: player.udemae)
           update_total_nuri_point(name: player.name, total_nuri_point: player.total_nuri_point + player.point)
           update_play_count(name: player.name, play_count: player.play_count + 1)
+          update_kill_count(name: player.name, total_kill_count: player.total_kill_count + player.kill_count)
+          update_die_count(name: player.name, total_die_count: player.total_die_count + player.die_count)
         end
 
         [3,4,5].each do |id|
@@ -286,6 +291,8 @@ module SamurAI
           rank_down(name: player.name, udemae: player.udemae)
           update_total_nuri_point(name: player.name, total_nuri_point: player.total_nuri_point + player.point)
           update_play_count(name: player.name, play_count: player.play_count + 1)
+          update_kill_count(name: player.name, total_kill_count: player.total_kill_count + player.kill_count)
+          update_die_count(name: player.name, total_die_count: player.total_die_count + player.die_count)
         end
       else
         [3,4,5].each do |id|
@@ -293,6 +300,8 @@ module SamurAI
           rank_up(name: player.name, udemae: player.udemae)
           update_total_nuri_point(name: player.name, total_nuri_point: player.total_nuri_point + player.point)
           update_play_count(name: player.name, play_count: player.play_count + 1)
+          update_kill_count(name: player.name, total_kill_count: player.total_kill_count + player.kill_count)
+          update_die_count(name: player.name, total_die_count: player.total_die_count + player.die_count)
         end
 
         [0,1,2].each do |id|
@@ -300,6 +309,8 @@ module SamurAI
           rank_down(name: player.name, udemae: player.udemae)
           update_total_nuri_point(name: player.name, total_nuri_point: player.total_nuri_point + player.point)
           update_play_count(name: player.name, play_count: player.play_count + 1)
+          update_kill_count(name: player.name, total_kill_count: player.total_kill_count + player.kill_count)
+          update_die_count(name: player.name, total_die_count: player.total_die_count + player.die_count)
         end
       end
     end
@@ -310,6 +321,14 @@ module SamurAI
 
     def update_play_count(name:, play_count:)
       db.execute("UPDATE ranking_table SET play_count = '#{play_count}' where name = '#{name}'")
+    end
+
+    def update_kill_count(name:, total_kill_count:)
+      db.execute("UPDATE ranking_table SET total_kill_count = '#{total_kill_count}' where name = '#{name}'")
+    end
+
+    def update_die_count(name:, total_die_count:)
+      db.execute("UPDATE ranking_table SET total_die_count = '#{total_die_count}' where name = '#{name}'")
     end
 
     #
@@ -364,7 +383,7 @@ module SamurAI
     # プレイヤーの登録
     #
     def regist_player(name:)
-      db.execute("INSERT INTO ranking_table values('#{name}', 'C30', 0, 0)")
+      db.execute("INSERT INTO ranking_table values('#{name}', 'C30', 0, 0, 0, 0)")
     end
 
     #
@@ -425,11 +444,13 @@ module SamurAI
       regist_player(name: name) if count.zero?
 
       db.execute("select * from ranking_table where name = '#{name}'") do |row|
-        name, udemae, total_nuri_point, play_count = *row
+        name, udemae, total_nuri_point, play_count, total_kill_count, total_die_count = *row
 
         player.udemae = udemae
         player.total_nuri_point = total_nuri_point
         player.play_count = play_count
+        player.total_kill_count = total_kill_count
+        player.total_die_count = total_die_count
         #puts "name: #{name}, udemae: #{udemae}, total_nuri_point: #{total_nuri_point}, play_count: #{play_count}"
       end
 
