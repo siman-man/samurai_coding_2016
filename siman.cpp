@@ -159,6 +159,7 @@ vector< vector<int> > g_danger_field(MAX_HEIGHT, vector<int>(MAX_WIDTH, 0));
 int g_kill_count = 0;
 
 const int ACTION_PATTERN_NUM = 41;
+const int OPERATION_LENGTH = 7;
 
 /*
  * プレイヤーの行動パターン
@@ -422,7 +423,7 @@ class SamurAI{
      * 行動
      */
     vector<int> action(){
-      vector<int> operation_list(7,0);
+      vector<int> operation_list(OPERATION_LENGTH, 0);
 
       priority_queue< NODE, vector<NODE>, greater<NODE> > pque;
 
@@ -433,7 +434,7 @@ class SamurAI{
       for(int i = 0; i < ACTION_PATTERN_NUM; i++){
         NODE node;
 
-        for(int j = 0; j < 7; j++){
+        for(int j = 0; j < OPERATION_LENGTH; j++){
           operation_list[j] = action_pattern[i][j];
         }
 
@@ -442,7 +443,7 @@ class SamurAI{
         }
 
         /*
-        for(int k = 0; k < 7; k++){
+        for(int k = 0; k < OPERATION_LENGTH; k++){
           fprintf(stderr,"%d ", operation_list[k]);
         }
         fprintf(stderr,"\n");
@@ -497,7 +498,7 @@ class SamurAI{
     /**
      * フィールドの危険値を更新
      */
-    void update_field_eval(){
+    void update_field_value(){
       if(g_groupId == 0){
         for(int player_id = 3; player_id < 6; player_id += 1){
           PLAYER *enemy = getPlayer(player_id);
@@ -563,7 +564,6 @@ class SamurAI{
         for(int x = 0; x < 9; x++){
           int ny = my->y + (y-4);
           int nx = my->x + (x-4);
-          int nz = getZ(ny,nx);
 
           // フィールド内かつ、居館ではなく、攻撃範囲に含まれている
           if(is_inside(ny, nx) && !is_exist_kyokan(ny, nx) && ((PLAYER_ATTACK_RANGE[my->job][y][x] >> direct) & 1)){
@@ -659,7 +659,6 @@ class SamurAI{
 
       for(int y = 0; y < g_height; y++){
         for(int x = 0; x < g_width; x++){
-          int z = getZ(y,x);
           int group_id = get_group_id(y,x);
 
           if(g_field[y][x] == g_playerId){
@@ -690,11 +689,11 @@ class SamurAI{
       /*
        * 足りない部分は0で埋める
        */
-      for(int i = 0; i < 7 - size; i++){
+      for(int i = 0; i < OPERATION_LENGTH - size; i++){
         operation_list.push_back(0);
       }
 
-      for(int i = 0; i < 7; i++){
+      for(int i = 0; i < OPERATION_LENGTH; i++){
         cout << operation_list[i];
 
         if(i != 6){
@@ -705,29 +704,38 @@ class SamurAI{
       cout << endl;
     }
 
-    /*
+    /**
      * z座標の取得を行う
      */
     inline int getZ(int y, int x){
       return y * MAX_WIDTH + x;
     }
 
-    /*
-     * フィールド内に存在しているかどうかを調べる
+    /**
+     * フィールド内かどうかを調べる
+     * @param y 調べたいy座標
+     * @param x 調べたいx座標
+     * @return (true: フィールド内, false: フィールド外)
      */
     inline bool is_inside(int y, int x){
       return (0 <= y && y < g_height && 0 <= x && x < g_width);
     }
 
-    /*
-     * フィールドの範囲外かどうかを調べる
+    /**
+     * フィールド外かどうかを調べる
+     * @param y 調べたいy座標
+     * @param x 調べたいx座標
+     * @return (true: フィールド外、 false: フィールド内)
      */
     inline bool is_outside(int y, int x){
       return (y < 0 || g_height <= y || x < 0 || g_width <= x);
     }
 
-    /*
+    /**
      * そのマスに敵がいるかどうかを調べる
+     * @param y 調べたいy座標
+     * @param x 調べたいx座標
+     * @return 敵がいるかどうかを返す
      */
     bool is_exist_enemy(int y, int x){
       for(int player_id = 0; player_id < MAX_PLAYER_NUM; player_id++){
@@ -742,8 +750,11 @@ class SamurAI{
       return false;
     }
 
-    /*
+    /**
      * そのマスに居館があるかどうかを調べる
+     * @param y 調べたいy座標
+     * @param x 調べたいx座標
+     * @return 居館があるかどうか
      */
     bool is_exist_kyokan(int y, int x){
       for(int kyokan_id = 0; kyokan_id < MAX_PLAYER_NUM; kyokan_id++){
@@ -757,18 +768,24 @@ class SamurAI{
       return false;
     }
 
-    /*
-     * 行動可能かどうかを返す
+    /**
+     * 指定したマスに行動可能かどうかを返す
+     * @param y 現在のy座標
+     * @param x 現在のx座標
+     * @param direct 進みたい方向
+     * @param status 潜伏状態かどうか
      */
     bool can_move(int y, int x, int direct, int status){
       int ny = y + DY[direct];
       int nx = x + DX[direct];
 
+      // 1. フィールド外であれば移動出来ない
       if(is_outside(ny,nx)){
         //fprintf(stderr,"y = %d, x = %d is outside!\n", ny, nx);
         return false;
       }
-      if(status == HIDE && get_group_id(ny,nx)!= g_groupId){
+      // 2. 潜伏状態でかつ自陣のフィールドでなければ移動出来ない
+      if(status == HIDE && get_group_id(ny,nx) != g_groupId){
         //fprintf(stderr,"y = %d, x = %d not my group erea!\n", ny, nx);
         return false;
       }
@@ -776,22 +793,22 @@ class SamurAI{
       return true;
     }
 
-    /*
+    /**
      * 潜伏できるかどうかを返す
+     * @param y 潜伏するy座標
+     * @param x 潜伏するx座標
+     * @return 潜伏できるかどうかを返す
      */
     inline bool can_hide(int y, int x){
-      int z = getZ(y,x);
-
-      // いずれかのサムライの陣地であり、かつ自身のチームの領域あった場合
-      if(g_field[y][x] <= 7 && g_field[y][x]/3 == g_groupId){
-        return true;
-      }else{
-        return false;
-      }
+      // 自身のチームの領域あった場合は潜伏出来る
+      return (get_group_id(y,x) == g_groupId);
     }
 
-    /*
+    /**
      * 顕現出来るかどうかを返す
+     * @param y 顕現するy座標
+     * @param x 顕現するx座標
+     * @return 顕現できるかどうかの判定
      */
     inline bool can_show_up(int y, int x){
       for(int playerId = 0; playerId < MAX_PLAYER_NUM; playerId++){
@@ -806,15 +823,17 @@ class SamurAI{
       return true;
     }
 
-    /*
+    /**
      * 有効な命令かどうかを調べる
      *   1. 攻撃はコストオーバ以外で違反にはならない
+     *   2. 0は何も行わない命令
+     *   3. 攻撃に関してはコストオーバ以外で失敗はないので無視
      */
     bool is_valid_operation(vector<int> operation_list){
       bool valid = true;
       PLAYER *my = getPlayer(g_playerId);
 
-      for(int i = 0; i < 7; i++){
+      for(int i = 0; i < OPERATION_LENGTH; i++){
         int operation = operation_list[i];
 
         if(operation == 0){
@@ -834,24 +853,24 @@ class SamurAI{
       return valid;
     }
 
-    /*
+    /**
      * 現在の場面を保存する
      */
     void save_field(){
       g_temp_field = g_field;
-      //memcpy(g_temp_field, g_field, sizeof(g_field));
     }
 
-    /*
-     * 保存していた盤面を戻す
+    /**
+     * 保存していた盤面を元に戻す
      */
     void rollback_field(){
       g_field = g_temp_field;
-      //memcpy(g_field, g_temp_field, sizeof(g_temp_field));
     }
 
-    /*
-     * Rollback Player
+    /**
+     * 自分の状態を元に戻す
+     *   1. 座標を戻す
+     *   2. 状態を戻す
      */
     void rollback_player(){
       PLAYER *my = getPlayer(g_playerId);
@@ -861,24 +880,28 @@ class SamurAI{
       my->status = my->beforeStatus;
     }
 
-    /*
-     * 
+    /**
+     * 指定した座標のグループIDを取得する
+     * @param y y座標
+     * @param x x座標
+     * @return 占領しているグループのID、誰も占領していない or 情報がわからない場合はUNKNOWNを返す
      */
     int get_group_id(int y, int x){
       int value = g_field[y][x];
 
-      if(value == 8 || value == 9){
+      if(value == NEUTRAL || value == NOTHING){
         return UNKNOWN;
       }else{
         return value/3;
       }
     }
 
+    /**
+     * フィールドを画面に出力する(デバッグ用)
+     */
     void show_field(){
       for(int y = 0; y < g_height; y++){
         for(int x = 0; x < g_width; x++){
-          int z = getZ(y,x);
-
           if(g_field[y][x] == g_playerId){
             fprintf(stderr,"M");
           }else{
