@@ -21,7 +21,7 @@ task :clean do
 end
 
 task :battle do
-  100.times do
+  1.times do
     system("ruby bin/samurai")
   end
 end

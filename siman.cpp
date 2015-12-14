@@ -134,7 +134,7 @@ KYOKAN g_kyokanList[MAX_PLAYER_NUM];
 // 自分のプレイヤー番号
 int g_playerId;
 // グループID
-int g_groupId;
+int g_group_id;
 // 最大ターン数
 int g_max_turn;
 // フィールドの横幅
@@ -154,6 +154,7 @@ vector< vector<int> > g_temp_field(MAX_HEIGHT, vector<int>(MAX_WIDTH, 0));
 
 // そのフィールドの危険度を表す
 vector< vector<int> > g_danger_field(MAX_HEIGHT, vector<int>(MAX_WIDTH, 0));
+vector< vector<int> > g_temp_danger_field(MAX_HEIGHT, vector<int>(MAX_WIDTH, 0));
 
 // 倒した数
 int g_kill_count = 0;
@@ -313,12 +314,12 @@ class SamurAI{
      * 初期情報の読み込みを行う
      */
     void init(){
-      scanf("%d %d %d %d %d", &g_max_turn, &g_groupId, &g_playerId, &g_width, &g_height);
+      scanf("%d %d %d %d %d", &g_max_turn, &g_group_id, &g_playerId, &g_width, &g_height);
       fprintf(stderr,"ready =>\n");
 
       fprintf(stderr,"max_turn => %d\n", g_max_turn);
       fprintf(stderr,"player id => %d\n", g_playerId);
-      fprintf(stderr,"group id => %d\n", g_groupId);
+      fprintf(stderr,"group id => %d\n", g_group_id);
       fprintf(stderr,"width: %d, height: %d\n", g_width, g_height);
       vector< vector<int> > g_field(g_height, vector<int>(g_width, 0));
       vector< vector<int> > g_temp_field(g_height, vector<int>(g_width, 0));
@@ -503,7 +504,7 @@ class SamurAI{
      * フィールドの評価値を更新
      */
     void update_field_value(){
-      if(g_groupId == 0){
+      if(g_group_id == 0){
         for(int player_id = 3; player_id < 6; player_id += 1){
           PLAYER *enemy = get_player(player_id);
 
@@ -536,7 +537,29 @@ class SamurAI{
 
           // フィールド内でかつ、相手の攻撃範囲に含まれていた場合は危険とみなす
           if(is_inside(ny, nx) && PLAYER_KILL_RANGE[job][dy][dx]){
-            g_danger_field[ny][nx] = 1;
+            g_danger_field[ny][nx] += 1;
+            assert(g_danger_field[ny][nx] > 0);
+          }
+        }
+      }
+    }
+
+    /**
+     * 危険値を減らす
+     * @param job 職業
+     * @param y 基準となるy座標
+     * @param x 基準となるx座標
+     */
+    void remove_danger_value(int job, int y, int x){
+      for(int dy = 0; dy < 11; dy++){
+        for(int dx = 0; dx < 11; dx++){
+          int ny = y + (dy-5);
+          int nx = x + (dx-5);
+
+          // フィールド内でかつ、相手の攻撃範囲に含まれていた場合は危険とみなす
+          if(is_inside(ny, nx) && PLAYER_KILL_RANGE[job][dy][dx]){
+            g_danger_field[ny][nx] -= 1;
+            assert(g_danger_field[ny][nx] < 0);
           }
         }
       }
@@ -678,7 +701,7 @@ class SamurAI{
           if(g_field[y][x] == g_playerId){
             owner_count += 1;
           }else if(group_id != UNKNOWN){
-            if(group_id != g_groupId){
+            if(group_id != g_group_id){
               enemy_area_count += 1;
             }else{
               friend_area_count += 1;
@@ -691,7 +714,7 @@ class SamurAI{
 
       //fprintf(stderr,"kill_count = %d, friend_area_count = %d, owner_count = %d, enemy_area_count = %d\n", g_kill_count, friend_area_count, owner_count, enemy_area_count);
 
-      return -10 * g_danger_field[my->y][my->x] + 20 * g_kill_count + (friend_area_count + 2 * owner_count) - enemy_area_count;
+      return -5 * g_danger_field[my->y][my->x] + 10 * g_kill_count + (friend_area_count + 2 * owner_count) - 2 * enemy_area_count;
     }
 
     /**
@@ -755,7 +778,7 @@ class SamurAI{
     bool is_exist_enemy(int y, int x){
       for(int player_id = 0; player_id < MAX_PLAYER_NUM; player_id++){
         PLAYER *player = get_player(player_id);
-        if(player->group_id == g_groupId) continue;
+        if(player->group_id == g_group_id) continue;
 
         if(player->y == y && player->x == x){
           return true;
@@ -800,7 +823,7 @@ class SamurAI{
         return false;
       }
       // 2. 潜伏状態でかつ自陣のフィールドでなければ移動出来ない
-      if(status == HIDE && get_group_id(ny,nx) != g_groupId){
+      if(status == HIDE && get_group_id(ny,nx) != g_group_id){
         //fprintf(stderr,"y = %d, x = %d not my group erea!\n", ny, nx);
         return false;
       }
@@ -816,7 +839,7 @@ class SamurAI{
      */
     inline bool can_hide(int y, int x){
       // 自身のチームの領域あった場合は潜伏出来る
-      return (get_group_id(y,x) == g_groupId);
+      return (get_group_id(y,x) == g_group_id);
     }
 
     /**
@@ -873,6 +896,7 @@ class SamurAI{
      */
     void save_field(){
       g_temp_field = g_field;
+      g_danger_field = g_danger_field;
     }
 
     /**
@@ -880,6 +904,7 @@ class SamurAI{
      */
     void rollback_field(){
       g_field = g_temp_field;
+      g_danger_field = g_temp_danger_field;
     }
 
     /**

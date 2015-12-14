@@ -107,7 +107,8 @@ module SamurAI
           player_action
 
           #sleep 0.1
-          #field.show
+          field.show
+          puts "-----------------------"
         end
 
         # 結果を集計 & 表示
